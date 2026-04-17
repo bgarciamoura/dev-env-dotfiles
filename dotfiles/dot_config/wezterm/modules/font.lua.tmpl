@@ -1,0 +1,17 @@
+local wezterm = require 'wezterm'
+
+local M = {}
+
+function M.apply(config)
+    config.font = wezterm.font_with_fallback({
+        '{{ .defaultFont }}',
+        'JetBrainsMono Nerd Font',
+        'Maple Mono NF',
+        'Symbols Nerd Font Mono',
+    })
+    config.font_size = 13.0
+    config.line_height = 1.10
+    config.harfbuzz_features = { 'calt=1', 'clig=1', 'liga=1' }
+end
+
+return M

@@ -1,88 +1,12 @@
 -- WezTerm config (managed by chezmoi).
--- Kitty image protocol + Sixel are both enabled.
--- Launches Nushell by default, wrapped in Zellij when attached to a TTY.
+-- Entrypoint: loads modular config from modules/.
 
 local wezterm = require 'wezterm'
-local act = wezterm.action
 local config = wezterm.config_builder()
 
------------------------------------------------------------------------------
--- Font
------------------------------------------------------------------------------
-config.font = wezterm.font_with_fallback({
-    '{{ .defaultFont }}',
-    'JetBrainsMono Nerd Font',
-    'Maple Mono NF',
-    'Symbols Nerd Font Mono',
-})
-config.font_size = 13.0
-config.line_height = 1.10
-config.harfbuzz_features = { 'calt=1', 'clig=1', 'liga=1' }
-
------------------------------------------------------------------------------
--- Image protocols
------------------------------------------------------------------------------
--- WezTerm supports Kitty graphics and Sixel natively. No extra config needed
--- for Kitty graphics. Sixel is enabled by default as well — declared here for
--- explicitness so Yazi and img2sixel both work.
-config.enable_kitty_graphics = true
-config.enable_kitty_keyboard = true
-
------------------------------------------------------------------------------
--- Shell — Nushell, wrapped in Zellij
------------------------------------------------------------------------------
-local function is_windows()
-    return wezterm.target_triple:find('windows') ~= nil
-end
-
-if is_windows() then
-    config.default_prog = { 'nu.exe' }
-else
-    -- Launch Nushell; Zellij auto-attaches via its own shell hook if enabled.
-    config.default_prog = { 'nu', '--login' }
-end
-
------------------------------------------------------------------------------
--- Appearance
------------------------------------------------------------------------------
--- `tinty` (tinted-theming) writes wezterm.lua colours into this file on
--- `tinty apply`. If it's missing, fall back to a built-in scheme.
-local ok, colors = pcall(require, 'colors/base16')
-if ok then
-    config.colors = colors
-else
-    config.color_scheme = 'Catppuccin Mocha'
-end
-
-config.window_background_opacity = 0.98
-config.window_decorations = 'RESIZE'
-config.window_padding = { left = 8, right = 8, top = 6, bottom = 6 }
-
-config.use_fancy_tab_bar = false
-config.hide_tab_bar_if_only_one_tab = true
-config.tab_max_width = 32
-
-config.scrollback_lines = 20000
-config.enable_scroll_bar = false
-
------------------------------------------------------------------------------
--- Keybindings
------------------------------------------------------------------------------
-config.keys = {
-    { key = 'Enter', mods = 'ALT',        action = act.ToggleFullScreen },
-    { key = '=',     mods = 'CTRL',       action = act.IncreaseFontSize },
-    { key = '-',     mods = 'CTRL',       action = act.DecreaseFontSize },
-    { key = '0',     mods = 'CTRL',       action = act.ResetFontSize },
-    { key = 'v',     mods = 'CTRL|SHIFT', action = act.PasteFrom 'Clipboard' },
-    { key = 'c',     mods = 'CTRL|SHIFT', action = act.CopyTo 'Clipboard' },
-    { key = 'f',     mods = 'CTRL|SHIFT', action = act.Search { CaseInSensitiveString = '' } },
-}
-
------------------------------------------------------------------------------
--- Misc quality-of-life
------------------------------------------------------------------------------
-config.audible_bell = 'Disabled'
-config.exit_behavior = 'Close'
-config.automatically_reload_config = true
+require('modules.font').apply(config)
+require('modules.shell').apply(config)
+require('modules.appearance').apply(config)
+require('modules.keys').apply(config)
 
 return config
