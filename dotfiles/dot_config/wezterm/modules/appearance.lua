@@ -9,11 +9,11 @@ function M.apply(config)
 	end
 
 	config.window_background_opacity = 0.98
-	config.window_decorations = "TITLE | RESIZE"
+	config.window_decorations = "RESIZE"
 	config.window_padding = { left = 8, right = 8, top = 6, bottom = 6 }
 
 	config.use_fancy_tab_bar = false
-	config.hide_tab_bar_if_only_one_tab = true
+	config.hide_tab_bar_if_only_one_tab = false
 	config.tab_max_width = 32
 
 	config.scrollback_lines = 20000
