@@ -14,8 +14,10 @@ README.md
 
 {{ if ne .chezmoi.os "windows" -}}
 .chezmoiscripts/00-windows-env-vars.ps1
+.chezmoiscripts/20-clone-nvim.ps1
 {{ end -}}
 
 {{ if eq .chezmoi.os "windows" -}}
 .chezmoiscripts/10-post-apply.sh
+.chezmoiscripts/20-clone-nvim.sh
 {{ end -}}

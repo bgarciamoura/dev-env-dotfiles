@@ -1,0 +1,83 @@
+{{- if eq .chezmoi.os "windows" -}}
+# Provisions the user's Neovim config by cloning github.com/bgarciamoura/neovim
+# into %USERPROFILE%\.config\nvim. Runs after chezmoi applies and any time this
+# script's hash changes. Idempotent: skips when the target is already a working
+# copy of that repo; otherwise backs up any pre-existing directory before cloning.
+#
+# Counterpart: .chezmoiscripts/run_onchange_after_20-clone-nvim.sh.tmpl runs on
+# macOS/Linux. Both are guarded by .chezmoiignore so only the right one applies.
+#
+# hash-src: v1 — bump to force rerun after bugfixes
+
+$ErrorActionPreference = 'Stop'
+
+function Write-ChezmoiLog ($msg) { Write-Host "[chezmoi] $msg" -ForegroundColor Cyan }
+function Write-ChezmoiWarn($msg) { Write-Warning "[chezmoi] $msg" }
+
+$NvimDir   = Join-Path $env:USERPROFILE '.config\nvim'
+$NvimRepo  = 'https://github.com/bgarciamoura/neovim'
+$RepoMatch = 'bgarciamoura/neovim'
+
+$gitCmd = Get-Command git -ErrorAction SilentlyContinue
+if (-not $gitCmd) {
+    Write-ChezmoiWarn "git not on PATH; cannot provision Neovim config. Install git and rerun 'chezmoi apply'."
+    exit 0
+}
+
+if (Test-Path (Join-Path $NvimDir '.git')) {
+    $currentUrl = ''
+    try { $currentUrl = & git -C $NvimDir remote get-url origin 2>$null } catch { }
+    if ($currentUrl -like "*$RepoMatch*") {
+        Write-ChezmoiLog "Neovim config already cloned at $NvimDir — skipping."
+        exit 0
+    }
+}
+
+if (Test-Path $NvimDir) {
+    $stamp  = Get-Date -Format 'yyyyMMdd-HHmmss'
+    $backup = "$NvimDir.bak-$stamp"
+    Write-ChezmoiLog "Existing $NvimDir is not our repo — moving to $backup"
+    Move-Item -LiteralPath $NvimDir -Destination $backup
+}
+
+$parent = Split-Path -Parent $NvimDir
+if (-not (Test-Path $parent)) { New-Item -ItemType Directory -Path $parent -Force | Out-Null }
+
+Write-ChezmoiLog "Cloning $NvimRepo into $NvimDir"
+& git clone $NvimRepo $NvimDir
+if ($LASTEXITCODE -ne 0) { throw "git clone failed with exit code $LASTEXITCODE" }
+
+$DepsScript = Join-Path $NvimDir 'scripts\install-deps.sh'
+if (Test-Path $DepsScript) {
+    # Locate a POSIX bash — Git for Windows (via Scoop) ships usr/bin/bash.exe.
+    # Prefer the Git-bundled bash over system bash to ensure POSIX tools (awk,
+    # sed, etc.) are resolvable when the script shells out.
+    $bash = $null
+    $candidates = @(
+        (Join-Path $env:USERPROFILE 'scoop\apps\git\current\bin\bash.exe'),
+        (Join-Path $env:USERPROFILE 'scoop\apps\git\current\usr\bin\bash.exe'),
+        (Join-Path $env:USERPROFILE 'scoop\shims\bash.exe')
+    )
+    foreach ($c in $candidates) {
+        if (Test-Path $c) { $bash = $c; break }
+    }
+    if (-not $bash) {
+        $cmd = Get-Command bash -ErrorAction SilentlyContinue
+        if ($cmd) { $bash = $cmd.Source }
+    }
+
+    if ($bash) {
+        Write-ChezmoiLog "Running $DepsScript via $bash"
+        & $bash $DepsScript
+        if ($LASTEXITCODE -ne 0) {
+            Write-ChezmoiWarn "install-deps.sh exited with code $LASTEXITCODE — inspect output above."
+        }
+    } else {
+        Write-ChezmoiWarn "bash not found — skipping install-deps.sh. Run manually: bash '$DepsScript'"
+    }
+} else {
+    Write-ChezmoiLog "scripts/install-deps.sh not present in repo — skipping deps step."
+}
+
+Write-ChezmoiLog "Neovim config ready at $NvimDir"
+{{- end }}

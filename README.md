@@ -206,7 +206,7 @@ new-dev-setup/
 ## Day-two notes
 
 - **Atuin sync**: after install, run `atuin register` on your first machine, then `atuin login` on the others. History syncs automatically.
-- **Neovim**: this repo does not ship a Neovim config. Either point `dotfiles/dot_config/nvim` at your existing config, or clone your modular config separately into `~/.config/nvim`. Chezmoi can also clone external repos via `.chezmoiexternal.toml` if you want it integrated.
+- **Neovim config**: provisionada automaticamente. Um script `.chezmoiscripts/run_onchange_after_20-clone-nvim.*` clona [`bgarciamoura/neovim`](https://github.com/bgarciamoura/neovim) em `~/.config/nvim` durante `chezmoi apply` e roda `scripts/install-deps.sh` do próprio repo. Lógica idempotente: se `~/.config/nvim` já for working copy do repo, pula; se existir com outro conteúdo, faz backup em `~/.config/nvim.bak-YYYYMMDD-HHMMSS` antes de clonar. Para sincronizar entre máquinas depois do bootstrap, `cd ~/.config/nvim && git pull` — é um working copy Git normal. Deps externas (ripgrep, Node ≥18, Python ≥3.10, git, Nerd Font) já são cobertas pelo Brewfile/scoopfile + mise.
 - **Themes**: install themes with `tinty install` and switch with `tinty apply base16-<name>`. It re-themes WezTerm, Nushell, Starship, and Yazi in one shot. **Windows: tinty is not available** — upstream source uses `std::os::unix::fs::symlink` and the Unix-only `xdg` crate, so it cannot be compiled on Windows with any Rust toolchain. Workarounds: run tinty inside WSL, or edit each tool's color config directly (see its respective `.config` file). Track [upstream issues](https://github.com/tinted-theming/tinty/issues) for a Windows port.
 - **Upgrading everything**: run `./install.sh` (or `install.ps1`) again — it's idempotent.
 
