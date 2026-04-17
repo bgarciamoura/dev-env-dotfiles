@@ -1,0 +1,16 @@
+# Local-only overrides (convention used across the project).
+*.local.json
+*.local.toml
+*.local.env
+*.local
+
+# OS noise
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Editor state
+.vscode/
+.idea/
+*.swp
+*.swo

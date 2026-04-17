@@ -1,0 +1,88 @@
+# Starship prompt (managed by chezmoi). See https://starship.rs/config/
+# Colours are intentionally left to be overwritten by `tinty apply`.
+
+add_newline = true
+command_timeout = 1000
+scan_timeout = 30
+
+format = """
+[](fg:prev_bg)\
+$username\
+$hostname\
+$directory\
+$git_branch\
+$git_status\
+$git_state\
+$nodejs\
+$python\
+$rust\
+$golang\
+$docker_context\
+$kubernetes\
+$cmd_duration\
+$line_break\
+$character"""
+
+[character]
+success_symbol = "[❯](bold green)"
+error_symbol   = "[❯](bold red)"
+vimcmd_symbol  = "[❮](bold green)"
+
+[directory]
+truncation_length = 4
+truncate_to_repo  = true
+style = "bold cyan"
+
+[git_branch]
+symbol = " "
+style  = "bold purple"
+
+[git_status]
+style = "bold yellow"
+conflicted = "⚔ "
+ahead      = "⇡${count} "
+behind     = "⇣${count} "
+diverged   = "⇕⇡${ahead_count}⇣${behind_count} "
+untracked  = "? "
+stashed    = "$ "
+modified   = "! "
+staged     = "+ "
+renamed    = "» "
+deleted    = "✘ "
+
+[cmd_duration]
+min_time = 1500
+format   = "took [$duration]($style) "
+style    = "yellow"
+
+[hostname]
+ssh_only = true
+format   = "on [$hostname](bold red) "
+
+[nodejs]
+symbol = " "
+format = "via [$symbol($version)]($style) "
+
+[python]
+symbol = " "
+format = 'via [$symbol${pyenv_prefix}(${version})(\($virtualenv\) )]($style)'
+
+[rust]
+symbol = " "
+format = "via [$symbol($version)]($style) "
+
+[golang]
+symbol = " "
+format = "via [$symbol($version)]($style) "
+
+[docker_context]
+symbol = " "
+format = "via [$symbol$context]($style) "
+
+[kubernetes]
+disabled = false
+symbol   = "☸ "
+format   = 'on [$symbol$context( \($namespace\))]($style) '
+
+[line_break]
+disabled = false

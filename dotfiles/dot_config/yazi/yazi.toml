@@ -1,0 +1,69 @@
+# Yazi — terminal file manager. See https://yazi-rs.github.io/docs/configuration/yazi
+# Image preview uses WezTerm's Kitty graphics protocol or Sixel, both available.
+
+[manager]
+ratio            = [1, 4, 3]
+sort_by          = "alphabetical"
+sort_sensitive   = false
+sort_reverse     = false
+sort_dir_first   = true
+linemode         = "none"
+show_hidden      = false
+show_symlink     = true
+scrolloff        = 5
+mouse_events     = ["click", "scroll"]
+title_format     = "Yazi: {cwd}"
+
+[preview]
+wrap             = "no"
+tab_size         = 2
+max_width        = 600
+max_height       = 900
+cache_dir        = ""
+image_filter     = "triangle"
+image_quality    = 80
+sixel_fraction   = 15
+ueberzug_scale   = 1
+ueberzug_offset  = [0, 0, 0, 0]
+
+[opener]
+edit = [
+    { run = 'nvim "$@"', block = true, for = "unix" },
+    { run = 'nvim %*',   block = true, for = "windows" },
+]
+open = [
+    { run = 'xdg-open "$@"', desc = "Open", for = "linux" },
+    { run = 'open "$@"',     desc = "Open", for = "macos" },
+    { run = 'start "" %*',   desc = "Open", orphan = true, for = "windows" },
+]
+reveal = [
+    { run = 'xdg-open "$(dirname "$0")"', desc = "Reveal", for = "linux" },
+    { run = 'open -R "$0"',               desc = "Reveal", for = "macos" },
+    { run = 'explorer /select,%*',        desc = "Reveal", orphan = true, for = "windows" },
+]
+
+[open]
+rules = [
+    { name = "*/",        use = [ "edit", "open", "reveal" ] },
+    { mime = "text/*",    use = [ "edit", "reveal" ] },
+    { mime = "image/*",   use = [ "open", "reveal" ] },
+    { mime = "video/*",   use = [ "open", "reveal" ] },
+    { mime = "application/x-bittorrent", use = [ "open", "reveal" ] },
+    { name = "*",         use = [ "open", "reveal" ] },
+]
+
+[tasks]
+micro_workers      = 10
+macro_workers      = 25
+bizarre_retry      = 5
+image_alloc        = 536870912
+image_bound        = [0, 0]
+suppress_preload   = false
+
+[plugin]
+prepend_previewers = []
+append_previewers  = []
+prepend_fetchers   = []
+append_fetchers    = []
+prepend_preloaders = []
+append_preloaders  = []

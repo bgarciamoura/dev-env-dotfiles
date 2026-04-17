@@ -1,0 +1,43 @@
+#!/usr/bin/env bash
+# Runs every time chezmoi applies and detects changes in its input hash.
+# Keeps vendor completion/integration files fresh when tool versions change.
+#
+# This script is skipped on Windows (chezmoi runs .ps1 only if scripted
+# separately). The Nushell env.nu handles Windows regeneration inline.
+set -euo pipefail
+
+{{/* Hash-sensitive fields force this script to rerun when any change is made. */ -}}
+# hash: {{ include ".chezmoi.toml.tmpl" | sha256sum }}
+
+log() { printf "\033[1;34m[chezmoi]\033[0m %s\n" "$*"; }
+
+# Skip on Windows — the Nushell env.nu regenerates vendor files on startup.
+{{- if eq .chezmoi.os "windows" }}
+exit 0
+{{- end }}
+
+VENDOR="$HOME/.config/nushell/vendor/autoload"
+mkdir -p "$VENDOR"
+
+if command -v starship >/dev/null 2>&1; then
+    log "Regenerating starship.nu"
+    starship init nu > "$VENDOR/starship.nu"
+fi
+if command -v zoxide >/dev/null 2>&1; then
+    log "Regenerating zoxide.nu"
+    zoxide init nushell > "$VENDOR/zoxide.nu"
+fi
+if command -v atuin >/dev/null 2>&1; then
+    log "Regenerating atuin.nu"
+    atuin init nu --disable-up-arrow > "$VENDOR/atuin.nu"
+fi
+if command -v carapace >/dev/null 2>&1; then
+    log "Regenerating carapace.nu"
+    carapace _carapace nushell > "$VENDOR/carapace.nu"
+fi
+if command -v mise >/dev/null 2>&1; then
+    log "Regenerating mise.nu"
+    mise activate nu > "$VENDOR/mise.nu"
+fi
+
+log "Done regenerating Nushell vendor autoload files."

@@ -1,0 +1,34 @@
+# mise — runtime version manager (asdf-compatible).
+# Managed by chezmoi. Edit in the source repo (dotfiles/dot_config/mise/config.toml),
+# not the deployed copy.
+#
+# Este é o config GLOBAL do usuário. Projetos individuais podem sobrescrever
+# criando seu próprio `mise.toml` na raiz. `mise install` (rodado pelo bootstrap
+# após `chezmoi apply`) instala as versões abaixo.
+#
+# Formatos aceitos por mise em [tools]:
+#   "22.11.0"  — pin exato de patch (mais reproduzível)
+#   "22"       — major pinado, minor/patch na mais recente (equilíbrio usado aqui)
+#   "lts"      — último LTS (só node)
+#   "latest"   — sempre a mais recente estável (menos reproduzível)
+#   "system"   — usa o binário instalado no OS, não gerenciado pelo mise
+#   "github:<owner>/<repo>"  — baixa release pré-compilado do GitHub (novo backend,
+#                              substitui o ubi: deprecated). Só funciona para
+#                              projetos que publicam binário pra sua plataforma.
+#
+# Para adicionar um runtime: acrescente uma linha em [tools], rode `chezmoi apply`
+# no diretório do repo e depois `mise install`.
+
+[tools]
+node = "22"      # LTS (Jod), ativa até 2027-04
+python = "3.13"  # stable atual
+
+# NOTA: tinty NÃO entra aqui. Upstream é Unix-only no source (usa
+# std::os::unix::fs::symlink e crate xdg), então nem GitHub release Windows
+# nem compilação local funcionam. Instalado apenas em macOS/Linux via
+# `brew "tinted-theming/tinted/tinty"` (packages/Brewfile). Se/quando
+# upstream portar pra Windows, migrar pra `github:tinted-theming/tinty`.
+
+[settings]
+# Verbose só em mise install manual; mantém saída limpa no bootstrap.
+verbose = false

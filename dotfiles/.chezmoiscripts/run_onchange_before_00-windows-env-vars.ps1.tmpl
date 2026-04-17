@@ -1,0 +1,67 @@
+{{- if eq .chezmoi.os "windows" -}}
+# Persists user-level environment variables so Windows tools read configs from
+# ~/.config/* instead of falling back to %APPDATA%. Idempotent: only writes when
+# the stored value differs. Also broadcasts WM_SETTINGCHANGE so already-running
+# GUI apps (Explorer, VS Code, WezTerm, etc.) pick up the new vars without
+# requiring logoff. Required explicitly on PS 5.1 (.NET Framework) — PS 7+ fires
+# it internally, but calling twice is harmless.
+#
+# hash-src: {{ .chezmoi.homeDir }}|v2
+
+$ErrorActionPreference = 'Stop'
+
+$UserHome  = $env:USERPROFILE
+$ConfigDir = Join-Path $UserHome '.config'
+$DataDir   = Join-Path $UserHome '.local\share'
+$CacheDir  = Join-Path $UserHome '.cache'
+
+$vars = [ordered]@{
+    XDG_CONFIG_HOME  = $ConfigDir
+    XDG_DATA_HOME    = $DataDir
+    XDG_CACHE_HOME   = $CacheDir
+    STARSHIP_CONFIG  = Join-Path $ConfigDir 'starship.toml'
+    ATUIN_CONFIG_DIR = Join-Path $ConfigDir 'atuin'
+    MISE_CONFIG_DIR  = Join-Path $ConfigDir 'mise'
+    YAZI_CONFIG_HOME = Join-Path $ConfigDir 'yazi'
+    '_ZO_DATA_DIR'   = Join-Path $DataDir 'zoxide'
+}
+
+$changed = @()
+$failed = @()
+foreach ($name in $vars.Keys) {
+    $desired = $vars[$name]
+    try {
+        $current = [Environment]::GetEnvironmentVariable($name, 'User')
+        if ($current -ne $desired) {
+            [Environment]::SetEnvironmentVariable($name, $desired, 'User')
+            $changed += $name
+        }
+    } catch {
+        $failed += "$name ($($_.Exception.Message))"
+    }
+}
+
+if ($changed.Count -gt 0) {
+    # Broadcast WM_SETTINGCHANGE — PS 5.1 doesn't do it automatically.
+    if (-not ('ChezmoiWin.Native' -as [type])) {
+        Add-Type -Namespace ChezmoiWin -Name Native -MemberDefinition @'
+[System.Runtime.InteropServices.DllImport("user32.dll", SetLastError = true, CharSet = System.Runtime.InteropServices.CharSet.Auto)]
+public static extern System.IntPtr SendMessageTimeout(
+    System.IntPtr hWnd, uint Msg, System.UIntPtr wParam, string lParam,
+    uint fuFlags, uint uTimeout, out System.UIntPtr lpdwResult);
+'@
+    }
+    $HWND_BROADCAST = [IntPtr]0xffff
+    $WM_SETTINGCHANGE = 0x1a
+    $result = [UIntPtr]::Zero
+    [void][ChezmoiWin.Native]::SendMessageTimeout(
+        $HWND_BROADCAST, $WM_SETTINGCHANGE, [UIntPtr]::Zero,
+        'Environment', 2, 5000, [ref]$result)
+
+    Write-Host "[chezmoi] Env vars atualizadas no escopo User: $($changed -join ', ')" -ForegroundColor Cyan
+    Write-Host "[chezmoi] Broadcast WM_SETTINGCHANGE enviado. Terminais/apps GUI abertos devem pegar os novos valores sem logoff." -ForegroundColor Cyan
+}
+if ($failed.Count -gt 0) {
+    Write-Warning "[chezmoi] Falha ao gravar env vars (registro bloqueado por GPO?): $($failed -join '; ')"
+}
+{{- end }}

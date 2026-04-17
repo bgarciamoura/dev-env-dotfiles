@@ -1,0 +1,112 @@
+# config.nu — evaluated after env.nu.
+# Managed by chezmoi. Edit in the source repo, not here.
+
+$env.config = {
+    show_banner: false
+
+    ls: {
+        use_ls_colors: true
+        clickable_links: true
+    }
+
+    rm: { always_trash: true }
+
+    table: {
+        mode: rounded
+        index_mode: always
+        show_empty: true
+        padding: { left: 1, right: 1 }
+        trim: {
+            methodology: wrapping
+            wrapping_try_keep_words: true
+        }
+    }
+
+    history: {
+        max_size: 100_000
+        sync_on_enter: true
+        file_format: "sqlite"
+        isolation: false
+    }
+
+    completions: {
+        case_sensitive: false
+        quick: true
+        partial: true
+        algorithm: "prefix"
+        external: {
+            enable: true
+            max_results: 100
+            # Carapace is wired in via env.nu → vendor/autoload/carapace.nu.
+            # The completer below is a final fallback.
+            completer: null
+        }
+    }
+
+    filesize: { unit: metric, precision: 1 }
+
+    cursor_shape: {
+        emacs: line
+        vi_insert: line
+        vi_normal: block
+    }
+
+    edit_mode: vi
+    # shell_integration: osc133 DEVE ficar false no WezTerm/Windows — Nushell
+    # emite o marker `ESC]133;A` a cada re-render do prompt e o WezTerm no
+    # Windows interpreta de forma que empurra o buffer uma linha por keystroke.
+    # Bug conhecido: nushell#5585, nushell#13410, nushell#16197, wezterm#2779,
+    # wezterm#6175, wezterm discussion #5859. Não ocorre em Windows Terminal
+    # nem no WezTerm em macOS/Linux.
+    # osc9_9 virou default `true` no Windows a partir do Nushell 0.105 (CWD
+    # tracking no Windows Terminal) — mantemos `true` mesmo rodando WezTerm.
+    shell_integration: {
+        osc2: true
+        osc7: true
+        osc8: true
+        osc9_9: true
+        osc133: false
+        osc633: true
+        reset_application_mode: true
+    }
+    render_right_prompt_on_last_line: false
+    use_kitty_protocol: true
+}
+
+# --- Aliases -----------------------------------------------------------
+alias ll = ls -la
+alias la = ls -a
+alias l  = ls
+alias lg = lazygit
+alias gs = git status
+alias gd = git diff
+alias gl = git log --oneline --graph --decorate --all
+
+# eza as a richer ls when available
+if (which eza | is-not-empty) {
+    alias ls = eza --icons=auto --group-directories-first
+    alias ll = eza -l --icons=auto --group-directories-first --git
+    alias la = eza -la --icons=auto --group-directories-first --git
+    alias lt = eza -T --icons=auto --git-ignore
+}
+
+# bat as cat
+if (which bat | is-not-empty) {
+    alias cat = bat --style=plain
+}
+
+# --- Keybindings -------------------------------------------------------
+# Atuin's up-arrow replacement (we disabled the default in env.nu so we bind
+# Ctrl+R to Atuin instead — leaves up-arrow for Nu's native history scroll).
+$env.config = ($env.config | upsert keybindings [
+    {
+        name: atuin_search
+        modifier: control
+        keycode: char_r
+        mode: [emacs, vi_insert, vi_normal]
+        event: { send: executehostcommand cmd: "atuin search --interactive" }
+    }
+])
+
+# --- Machine-specific data ---------------------------------------------
+# {{ .fullName }} <{{ .email }}> — {{ .machineClass }} machine on {{ .chezmoi.os }}

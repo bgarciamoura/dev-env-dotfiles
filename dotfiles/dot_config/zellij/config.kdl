@@ -1,0 +1,38 @@
+// Zellij config (managed by chezmoi).
+// See https://zellij.dev/documentation/configuration.html
+
+default_shell "nu"
+default_layout "compact"
+
+// Inherit WezTerm's font and theme; use compact UI.
+pane_frames false
+simplified_ui false
+mouse_mode true
+copy_command "pbcopy"   // macOS; overridden on Linux/Windows by Zellij auto-detect
+
+scroll_buffer_size 20000
+
+// base16 theme file written by `tinty apply`. Zellij will hot-reload.
+theme "base16"
+theme_dir "~/.config/zellij/themes"
+
+// Load plugin aliases
+load_plugins {
+    tab-bar
+    status-bar
+}
+
+// Keybindings — sane defaults with vim-style pane navigation in normal mode.
+keybinds {
+    normal {
+        bind "Ctrl g" { SwitchToMode "Locked"; }
+        bind "Alt h" { MoveFocusOrTab "Left"; }
+        bind "Alt l" { MoveFocusOrTab "Right"; }
+        bind "Alt j" { MoveFocus "Down"; }
+        bind "Alt k" { MoveFocus "Up"; }
+        bind "Alt =" "Alt +" { Resize "Increase"; }
+        bind "Alt -" { Resize "Decrease"; }
+        bind "Alt n" { NewPane; }
+        bind "Alt t" { NewTab; }
+    }
+}

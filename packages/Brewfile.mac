@@ -1,0 +1,10 @@
+# macOS-only cask additions — GUI apps and fonts.
+# Run via: brew bundle --file=packages/Brewfile.mac
+# (The main Brewfile is installed first; this layers Mac-only extras on top.)
+
+# --- Terminal ------------------------------------------------------------
+cask "wezterm"
+
+# --- Fonts ---------------------------------------------------------------
+cask "font-jetbrains-mono-nerd-font"
+cask "font-maple-mono-nf"

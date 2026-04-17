@@ -1,0 +1,21 @@
+# Files in the Chezmoi source that should NOT be applied to $HOME.
+# Templated so we can skip OS-specific entries on the wrong OS.
+#
+# IMPORTANTE: patterns batem contra TARGET PATH usando doublestar.Match (não
+# gitignore — um pattern sem '/' NÃO recebe '**/' implícito). Para scripts em
+# .chezmoiscripts/ o target path MANTÉM o prefixo '.chezmoiscripts/' mas REMOVE
+# os attribute prefixes ('run_onchange_before_', 'run_onchange_after_', 'run_')
+# e REMOVE o sufixo '.tmpl'. Exemplo:
+#   Source:  .chezmoiscripts/run_onchange_after_10-post-apply.sh.tmpl
+#   Target:  .chezmoiscripts/10-post-apply.sh  ← é esse que o pattern deve bater
+# Referência: chezmoi internal/chezmoi/sourcestate.go readScriptsDir (v2.50+);
+# teste oficial internal/cmd/testdata/scripts/issue2510.txtar.
+README.md
+
+{{ if ne .chezmoi.os "windows" -}}
+.chezmoiscripts/00-windows-env-vars.ps1
+{{ end -}}
+
+{{ if eq .chezmoi.os "windows" -}}
+.chezmoiscripts/10-post-apply.sh
+{{ end -}}

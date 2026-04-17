@@ -1,0 +1,35 @@
+{
+  "buckets": [
+    { "Name": "main",       "Source": "https://github.com/ScoopInstaller/Main" },
+    { "Name": "extras",     "Source": "https://github.com/ScoopInstaller/Extras" },
+    { "Name": "versions",   "Source": "https://github.com/ScoopInstaller/Versions" },
+    { "Name": "nerd-fonts", "Source": "https://github.com/matthewjberger/scoop-nerd-fonts" }
+  ],
+  "apps": [
+    { "Source": "main",   "Name": "git" },
+    { "Source": "main",   "Name": "gh" },
+    { "Source": "main",   "Name": "chezmoi" },
+    { "Source": "main",   "Name": "nu" },
+    { "Source": "main",   "Name": "starship" },
+    { "Source": "main",   "Name": "zellij" },
+    { "Source": "main",   "Name": "atuin" },
+    { "Source": "main",   "Name": "zoxide" },
+    { "Source": "extras", "Name": "carapace-bin" },
+    { "Source": "main",   "Name": "fzf" },
+    { "Source": "main",   "Name": "fd" },
+    { "Source": "main",   "Name": "ripgrep" },
+    { "Source": "main",   "Name": "bat" },
+    { "Source": "main",   "Name": "eza" },
+    { "Source": "main",   "Name": "jq" },
+    { "Source": "main",   "Name": "yq" },
+    { "Source": "main",   "Name": "neovim" },
+    { "Source": "main",   "Name": "mise" },
+    { "Source": "main",   "Name": "rustup" },
+    { "Source": "main",   "Name": "gpg" },
+    { "Source": "main",   "Name": "yazi" },
+    { "Source": "extras", "Name": "wezterm" },
+    { "Source": "extras", "Name": "lazygit" },
+    { "Source": "nerd-fonts", "Name": "JetBrainsMono-NF" },
+    { "Source": "nerd-fonts", "Name": "Maple-Mono-NF" }
+  ]
+}

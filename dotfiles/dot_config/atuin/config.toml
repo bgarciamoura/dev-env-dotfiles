@@ -1,0 +1,36 @@
+# Atuin — shell history that syncs across machines.
+# Run `atuin register` on your first machine, `atuin login` on the others.
+# See https://docs.atuin.sh/configuration/
+
+## Where to store history (sqlite path).
+db_path = "~/.local/share/atuin/history.db"
+
+## Sync address — the default is the public atuin.sh instance.
+sync_address = "https://api.atuin.sh"
+sync_frequency = "5m"
+auto_sync     = true
+update_check  = true
+
+## Search behaviour
+search_mode      = "fuzzy"    # prefix | fulltext | fuzzy | skim
+filter_mode      = "global"   # host | session | directory | global
+filter_mode_shell_up_key_binding = "session"
+style            = "compact"  # auto | full | compact
+inline_height    = 20
+show_preview     = true
+exit_mode        = "return-original"
+
+## Don't record commands prefixed with a space.
+history_filter = [
+    "^secret",
+    "^[ \t]+",
+]
+
+## Do record everything else.
+cwd_filter = []
+
+## Stats: what counts as a "command" for `atuin stats`.
+common_prefix    = ["sudo"]
+common_subcommands = [
+    "cargo", "go", "git", "kubectl", "npm", "pnpm", "yarn", "docker", "nix", "brew", "scoop"
+]

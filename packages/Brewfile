@@ -1,0 +1,50 @@
+# Brewfile — shared between macOS and Linux (Homebrew on Linux).
+# Run via: brew bundle --file=packages/Brewfile
+#
+# Homebrew gives us the latest upstream versions on both platforms, which is
+# the whole point: we pin behaviour to the formula, not to the OS repository.
+#
+# NOTE: this file must stay cross-platform. Casks and Mac-only apps belong in
+# `packages/Brewfile.mac` — the macOS bootstrap installs both files.
+
+# --- Core terminal stack --------------------------------------------------
+brew "nushell"            # shell
+brew "starship"           # prompt
+brew "zellij"             # multiplexer
+brew "atuin"              # shell history (synced)
+brew "zoxide"             # smarter cd
+brew "carapace"           # completion engine for nushell/fish/bash/...
+
+# --- Theming -------------------------------------------------------------
+# tinty (base16 theme switcher) — Unix-only. Source usa std::os::unix::fs::symlink
+# e crate xdg (também Unix-only), então não compila em Windows. Windows users
+# ficam sem tinty até upstream portar (ver bootstrap/windows.ps1).
+tap  "tinted-theming/tinted"
+brew "tinted-theming/tinted/tinty"
+
+# --- File manager & navigation -------------------------------------------
+brew "yazi"
+brew "fzf"
+brew "fd"
+brew "ripgrep"
+brew "bat"
+brew "eza"
+
+# --- Editor ---------------------------------------------------------------
+brew "neovim"
+
+# --- Dotfile management ---------------------------------------------------
+brew "chezmoi"
+
+# --- Dev essentials -------------------------------------------------------
+brew "git"
+brew "gh"
+brew "jq"
+brew "yq"
+brew "tree"
+brew "wget"
+brew "gnupg"              # required by mise node plugin for GPG verification
+brew "lazygit"            # TUI git client (alias `lg` no Nushell)
+
+# --- Runtimes (optional but useful) --------------------------------------
+brew "mise"               # asdf-style runtime manager (node, python, etc.)

@@ -1,0 +1,19 @@
+# Normalize text files: store as LF in the repo, checkout per-platform.
+* text=auto eol=lf
+
+# Shell scripts MUST be LF — CRLF breaks bash on Unix with "\r: command not found".
+*.sh text eol=lf
+
+# Windows native scripts must stay CRLF so Windows PowerShell 5.1 parses them.
+*.ps1 text eol=crlf
+*.bat text eol=crlf
+*.cmd text eol=crlf
+
+# Binary catch-all (fonts, images, archives).
+*.ttf binary
+*.otf binary
+*.png binary
+*.jpg binary
+*.gif binary
+*.zip binary
+*.7z binary
