@@ -23,12 +23,6 @@
 node = "22"      # LTS (Jod), ativa até 2027-04
 python = "3.13"  # stable atual
 
-# NOTA: tinty NÃO entra aqui. Upstream é Unix-only no source (usa
-# std::os::unix::fs::symlink e crate xdg), então nem GitHub release Windows
-# nem compilação local funcionam. Instalado apenas em macOS/Linux via
-# `brew "tinted-theming/tinted/tinty"` (packages/Brewfile). Se/quando
-# upstream portar pra Windows, migrar pra `github:tinted-theming/tinty`.
-
 [settings]
 # Verbose só em mise install manual; mantém saída limpa no bootstrap.
 verbose = false

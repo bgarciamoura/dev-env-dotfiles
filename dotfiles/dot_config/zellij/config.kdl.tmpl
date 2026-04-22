@@ -12,8 +12,9 @@ copy_command "pbcopy"   // macOS; overridden on Linux/Windows by Zellij auto-det
 
 scroll_buffer_size 20000
 
-// base16 theme file written by `tinty apply`. Zellij will hot-reload.
-theme "base16"
+// Theme name matches a file in theme_dir ({name}.kdl).
+// Palette defined under dotfiles/.chezmoidata/themes.toml and applied via chezmoi.
+theme "{{ .theme }}"
 theme_dir "~/.config/zellij/themes"
 
 // Load plugin aliases

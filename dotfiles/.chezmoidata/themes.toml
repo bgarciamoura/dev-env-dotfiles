@@ -1,0 +1,49 @@
+# Central theme catalogue consumed by templates under dot_config/.
+# Chezmoi auto-loads .chezmoidata/*.{toml,yaml,json} and exposes it under `.themes`.
+# To add a variant: append a new `[themes.<name>]` block with the same keys,
+# then add the name to the `theme` prompt choices in .chezmoi.toml.tmpl.
+
+[themes.oasis-lagoon-dark]
+name    = "Oasis Lagoon Dark"
+variant = "dark"
+
+bg        = "#101825"
+fg        = "#D9E6FA"
+cursor    = "#F0E68C"
+selection = "#666666"
+
+# Core palette (mirrors the oasis starship palette, keys match Starship convention).
+primary        = "#58B8FD"
+strong_primary = "#1CA0FD"
+black          = "#101825"
+red            = "#FF7979"
+green          = "#7FCF78"
+yellow         = "#F0E68C"
+blue           = "#81C0FF"
+purple         = "#C695FF"
+cyan           = "#68C0B6"
+white          = "#FFF7D7"
+bright_black   = "#3B6A87"
+bright_red     = "#FFA0A0"
+bright_green   = "#A3E39A"
+bright_yellow  = "#F8B471"
+bright_blue    = "#87CEEB"
+bright_purple  = "#D2ADFF"
+bright_cyan    = "#8FD1C7"
+bright_white   = "#F7F4E9"
+
+# Tab bar (WezTerm-specific).
+tab_bar_bg      = "#1A283F"
+tab_active_bg   = "#58B8FD"
+tab_active_fg   = "#101825"
+tab_inactive_bg = "#22385C"
+tab_inactive_fg = "#58B8FD"
+
+# Semantic accents: each pastel-powerline segment points to one of these.
+# Change the mapping here to re-theme without touching the consumer templates.
+accent_user   = "#C695FF"
+accent_dir    = "#F8B471"
+accent_git    = "#68C0B6"
+accent_lang   = "#87CEEB"
+accent_docker = "#A3E39A"
+accent_time   = "#1CA0FD"

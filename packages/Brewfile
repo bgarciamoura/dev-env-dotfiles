@@ -15,13 +15,6 @@ brew "atuin"              # shell history (synced)
 brew "zoxide"             # smarter cd
 brew "carapace"           # completion engine for nushell/fish/bash/...
 
-# --- Theming -------------------------------------------------------------
-# tinty (base16 theme switcher) — Unix-only. Source usa std::os::unix::fs::symlink
-# e crate xdg (também Unix-only), então não compila em Windows. Windows users
-# ficam sem tinty até upstream portar (ver bootstrap/windows.ps1).
-tap  "tinted-theming/tinted"
-brew "tinted-theming/tinted/tinty"
-
 # --- File manager & navigation -------------------------------------------
 brew "yazi"
 brew "fzf"

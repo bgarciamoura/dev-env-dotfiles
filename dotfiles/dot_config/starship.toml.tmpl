@@ -1,0 +1,127 @@
+{{- $t := index .themes .theme -}}
+# Starship prompt (managed by chezmoi). See https://starship.rs/config/
+# Layout based on the official `pastel-powerline` preset
+# (https://starship.rs/presets/pastel-powerline) with colors driven by
+# the `theme` chezmoi variable. Palette lives in .chezmoidata/themes.toml.
+
+"$schema" = "https://starship.rs/config-schema.json"
+
+add_newline = true
+command_timeout = 1000
+scan_timeout = 30
+
+format = """
+[](fg:user)\
+$username\
+[](fg:user bg:dir)\
+$directory\
+[](fg:dir bg:git)\
+$git_branch\
+$git_status\
+[](fg:git bg:lang)\
+$c\
+$golang\
+$nodejs\
+$python\
+$rust\
+[](fg:lang bg:docker)\
+$docker_context\
+[](fg:docker bg:time)\
+$time\
+[ ](fg:time)\
+$cmd_duration\
+$line_break\
+$character"""
+
+palette = "active"
+
+[palettes.active]
+# Semantic names — values come from the active theme palette.
+user   = "{{ $t.accent_user }}"
+dir    = "{{ $t.accent_dir }}"
+git    = "{{ $t.accent_git }}"
+lang   = "{{ $t.accent_lang }}"
+docker = "{{ $t.accent_docker }}"
+time   = "{{ $t.accent_time }}"
+fg_on  = "{{ $t.bg }}"
+
+[username]
+show_always = true
+style_user = "bg:user fg:fg_on"
+style_root = "bg:user fg:fg_on"
+format = "[ $user ]($style)"
+disabled = false
+
+[directory]
+style = "bg:dir fg:fg_on"
+format = "[ $path ]($style)"
+truncation_length = 4
+truncation_symbol = "…/"
+truncate_to_repo = true
+
+[directory.substitutions]
+"Documents" = "󰈙"
+"Downloads" = ""
+"Music"     = ""
+"Pictures"  = ""
+
+[git_branch]
+symbol = ""
+style  = "bg:git fg:fg_on"
+format = "[ $symbol $branch ]($style)"
+
+[git_status]
+style = "bg:git fg:fg_on"
+format = "[$all_status$ahead_behind ]($style)"
+
+[c]
+symbol = " "
+style  = "bg:lang fg:fg_on"
+format = "[ $symbol($version) ]($style)"
+
+[golang]
+symbol = " "
+style  = "bg:lang fg:fg_on"
+format = "[ $symbol($version) ]($style)"
+
+[nodejs]
+symbol = " "
+style  = "bg:lang fg:fg_on"
+format = "[ $symbol($version) ]($style)"
+
+[python]
+symbol = " "
+style  = "bg:lang fg:fg_on"
+format = "[ $symbol${pyenv_prefix}(${version})(\\($virtualenv\\)) ]($style)"
+
+[rust]
+symbol = " "
+style  = "bg:lang fg:fg_on"
+format = "[ $symbol($version) ]($style)"
+
+[docker_context]
+symbol = " "
+style  = "bg:docker fg:fg_on"
+format = "[ $symbol$context ]($style)"
+
+[time]
+disabled = false
+time_format = "%R"
+style = "bg:time fg:fg_on"
+format = "[ ♥ $time ]($style)"
+
+[cmd_duration]
+min_time = 1500
+format   = " took [$duration](bold yellow)"
+
+[hostname]
+ssh_only = true
+format   = "on [$hostname](bold red) "
+
+[character]
+success_symbol = "[❯](bold green)"
+error_symbol   = "[❯](bold red)"
+vimcmd_symbol  = "[❮](bold green)"
+
+[line_break]
+disabled = false

@@ -11,7 +11,7 @@ Reproducible development environment for **Windows 11, macOS, Ubuntu, and Debian
 | Multiplexer  | Zellij                                      |
 | Prompt       | Starship                                    |
 | Editor       | Neovim (your modular setup)                 |
-| Theming      | Tinted Theming (base16 via `tinty`)         |
+| Theming      | Chezmoi-driven palette (`.chezmoidata/themes.toml`) |
 | Font         | JetBrainsMono Nerd Font / Maple Mono NF     |
 | File manager | Yazi                                        |
 | History      | Atuin (synced across machines)              |
@@ -158,8 +158,95 @@ The first time you run `chezmoi init`, you'll be asked for:
 - **Full name** and **email** (used by `git`, editors, etc.)
 - **Machine class**: `personal` / `work`
 - **Default font**: `JetBrainsMono Nerd Font` / `Maple Mono NF`
+- **Theme**: picks a palette from `dotfiles/.chezmoidata/themes.toml` (default `oasis-lagoon-dark`)
 
-These answers are stored in `~/.config/chezmoi/chezmoi.toml` and drive conditional logic in the templates (e.g., different WezTerm font, different git email per machine).
+These answers are stored in `~/.config/chezmoi/chezmoi.toml` and drive conditional logic in the templates (e.g., different WezTerm font, different git email per machine, same palette applied to WezTerm + Starship + Zellij).
+
+## Themes
+
+Palettes are catalogued in `dotfiles/.chezmoidata/themes.toml`. The active theme is picked by the `theme` answer stored in `~/.config/chezmoi/chezmoi.toml`, and the templates under `dot_config/` consume that palette so WezTerm, Starship, and Zellij all change together. Works identically on Windows, macOS, and Linux, with no extra runtime.
+
+Default is `oasis-lagoon-dark`, adapted from [uhs-robert/oasis.nvim](https://github.com/uhs-robert/oasis.nvim).
+
+### Switching themes
+
+Three ways, fastest first:
+
+1. **Edit the chezmoi config directly** (no re-prompt of other fields):
+
+   ```bash
+   chezmoi edit-config        # opens ~/.config/chezmoi/chezmoi.toml
+   # change: theme = "oasis-lagoon-dark"  →  theme = "oasis-desert-dark"
+   chezmoi apply
+   ```
+
+2. **Re-run the prompts** (asks every question again):
+
+   ```bash
+   chezmoi init --source dotfiles --force
+   chezmoi apply
+   ```
+
+3. **One-off override** (useful for testing without persisting):
+
+   ```bash
+   chezmoi apply --source dotfiles --no-tty -D theme=oasis-desert-dark
+   ```
+
+After any of the above, reopen WezTerm/shell/Zellij and the new palette is in effect everywhere.
+
+### Adding a new theme
+
+Three files to touch:
+
+**1. Append a palette block to `dotfiles/.chezmoidata/themes.toml`.** All keys are required — the templates reference them by name. Copy an existing block and swap the hex values:
+
+```toml
+[themes.oasis-desert-dark]
+name    = "Oasis Desert Dark"
+variant = "dark"
+bg        = "#..."
+fg        = "#..."
+# ... same keys as oasis-lagoon-dark
+accent_user   = "#..."
+accent_dir    = "#..."
+# ...
+```
+
+For Oasis variants, hex values are already published in [`extras/wezterm/themes/dark/`](https://github.com/uhs-robert/oasis.nvim/tree/main/extras/wezterm/themes/dark) and [`extras/starship/themes/dark/`](https://github.com/uhs-robert/oasis.nvim/tree/main/extras/starship/themes/dark) — mechanical mapping.
+
+**2. Add the name to the prompt in `dotfiles/.chezmoi.toml.tmpl`:**
+
+```diff
+-{{- $theme := promptChoiceOnce . "theme" "Theme..." (list "oasis-lagoon-dark") "oasis-lagoon-dark" -}}
++{{- $theme := promptChoiceOnce . "theme" "Theme..." (list "oasis-lagoon-dark" "oasis-desert-dark") "oasis-lagoon-dark" -}}
+```
+
+**3. Create the matching Zellij theme file at `dotfiles/dot_config/zellij/themes/<name>.kdl`.** Zellij requires one KDL file per variant — WezTerm and Starship read straight from `.chezmoidata/themes.toml`, but Zellij is separate by design of the tool itself.
+
+```kdl
+themes {
+    oasis-desert-dark {
+        fg      "#..."
+        bg      "#..."
+        black   "#..."
+        red     "#..."
+        green   "#..."
+        yellow  "#..."
+        blue    "#..."
+        magenta "#..."
+        cyan    "#..."
+        white   "#..."
+        orange  "#..."
+    }
+}
+```
+
+Then apply:
+
+```bash
+chezmoi apply
+```
 
 ## Repository layout
 
@@ -181,6 +268,8 @@ new-dev-setup/
     ├── .chezmoiroot
     ├── .chezmoi.toml.tmpl       # Initial prompts
     ├── .chezmoiignore
+    ├── .chezmoidata/
+    │   └── themes.toml          # Central theme catalogue (consumed by templates)
     ├── .chezmoiscripts/
     │   ├── run_onchange_after_10-post-apply.sh.tmpl
     │   └── run_onchange_before_00-windows-env-vars.ps1.tmpl  # Windows-only
@@ -189,10 +278,18 @@ new-dev-setup/
         │   ├── config.nu.tmpl
         │   └── env.nu.tmpl
         ├── wezterm/
-        │   └── wezterm.lua.tmpl
+        │   ├── wezterm.lua.tmpl
+        │   └── modules/
+        │       ├── appearance.lua.tmpl  # color scheme driven by .theme
+        │       ├── status.lua.tmpl      # status bar colors from theme
+        │       ├── font.lua.tmpl
+        │       ├── keys.lua
+        │       └── shell.lua
         ├── zellij/
-        │   └── config.kdl
-        ├── starship.toml
+        │   ├── config.kdl.tmpl  # theme name comes from .theme
+        │   └── themes/
+        │       └── oasis-lagoon-dark.kdl
+        ├── starship.toml.tmpl   # pastel-powerline layout + themed palette
         ├── atuin/
         │   └── config.toml
         ├── mise/
@@ -207,7 +304,7 @@ new-dev-setup/
 
 - **Atuin sync**: after install, run `atuin register` on your first machine, then `atuin login` on the others. History syncs automatically.
 - **Neovim config**: provisionada automaticamente. Um script `.chezmoiscripts/run_onchange_after_20-clone-nvim.*` clona [`bgarciamoura/neovim`](https://github.com/bgarciamoura/neovim) em `~/.config/nvim` durante `chezmoi apply` e roda `scripts/install-deps.sh` do próprio repo. Lógica idempotente: se `~/.config/nvim` já for working copy do repo, pula; se existir com outro conteúdo, faz backup em `~/.config/nvim.bak-YYYYMMDD-HHMMSS` antes de clonar. Para sincronizar entre máquinas depois do bootstrap, `cd ~/.config/nvim && git pull` — é um working copy Git normal. Deps externas (ripgrep, Node ≥18, Python ≥3.10, git, Nerd Font) já são cobertas pelo Brewfile/scoopfile + mise.
-- **Themes**: install themes with `tinty install` and switch with `tinty apply base16-<name>`. It re-themes WezTerm, Nushell, Starship, and Yazi in one shot. **Windows: tinty is not available** — upstream source uses `std::os::unix::fs::symlink` and the Unix-only `xdg` crate, so it cannot be compiled on Windows with any Rust toolchain. Workarounds: run tinty inside WSL, or edit each tool's color config directly (see its respective `.config` file). Track [upstream issues](https://github.com/tinted-theming/tinty/issues) for a Windows port.
+- **Themes**: see the dedicated [Themes](#themes) section above for how to switch palettes or add new ones.
 - **Upgrading everything**: run `./install.sh` (or `install.ps1`) again — it's idempotent.
 
 ## Windows: paths resolvidos via env vars
@@ -227,7 +324,7 @@ No Windows várias ferramentas da stack ignoram XDG por padrão e procuram confi
 
 O script é idempotente (compara antes de escrever). **Caveat**: `SetEnvironmentVariable('User')` só aparece em processos **novos** — feche e reabra o terminal após o primeiro `install.ps1`. Nushell precisa ser ≥0.92 para honrar `XDG_CONFIG_HOME` no Windows; o bootstrap avisa se a versão for menor.
 
-Tinty, Carapace e Neovim são cobertos automaticamente por herdarem `XDG_CONFIG_HOME`. WezTerm já reconhece `~/.config/wezterm/wezterm.lua` nativamente. Zellij não roda em Windows nativo (só WSL), então foi ignorado.
+Carapace e Neovim são cobertos automaticamente por herdarem `XDG_CONFIG_HOME`. WezTerm já reconhece `~/.config/wezterm/wezterm.lua` nativamente. Zellij não roda em Windows nativo (só WSL), então foi ignorado.
 
 ## Troubleshooting
 

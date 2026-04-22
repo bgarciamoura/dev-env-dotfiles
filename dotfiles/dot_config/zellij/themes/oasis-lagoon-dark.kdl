@@ -1,0 +1,17 @@
+// Oasis Lagoon Dark — adapted from uhs-robert/oasis.nvim.
+// Palette mirrors dotfiles/.chezmoidata/themes.toml → themes.oasis-lagoon-dark.
+themes {
+    oasis-lagoon-dark {
+        fg      "#D9E6FA"
+        bg      "#101825"
+        black   "#101825"
+        red     "#FF7979"
+        green   "#7FCF78"
+        yellow  "#F0E68C"
+        blue    "#81C0FF"
+        magenta "#C695FF"
+        cyan    "#68C0B6"
+        white   "#FFF7D7"
+        orange  "#F8B471"
+    }
+}

@@ -232,14 +232,6 @@ if (Test-Path $CargoFile) {
     }
 }
 
-# tinty NÃO é instalado no Windows. O source do tinty v0.30.0 usa
-# `std::os::unix::fs::symlink` (install.rs:6, apply.rs:320) e importa o crate
-# `xdg` (que é Unix-only por design) — não compila em Windows com nenhum
-# toolchain (MSVC nem GNU). Upstream confirmou isso ao não publicar binário
-# Windows. Alternativas para usuários Windows: (a) rodar tinty via WSL;
-# (b) configurar temas manualmente nos .config de cada ferramenta. Se/quando
-# upstream portar pra Windows, re-adicionar instalação aqui OU no mise config.
-
 # 5. Neovim version gate — exige >= 0.12.0. Mesma técnica do Nushell logo abaixo:
 # strip de suffix pre-release antes do [version]::TryParse porque builds nightly
 # (ex: '0.12.0-dev+g1234abc') fariam o parse retornar $null e o comparador virar.

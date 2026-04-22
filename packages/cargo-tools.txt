@@ -1,12 +1,6 @@
 # Cargo tools — universal fallback for Rust CLIs.
 # Installed if a crate is missing from brew/scoop or você quer a tip do git.
 # Um crate por linha. Linhas iniciando com '#' são ignoradas.
-#
-# tinty (tinted-theming) NÃO entra aqui. Instalado só em Unix via Brewfile:
-# `brew "tinted-theming/tinted/tinty"`. No Windows o source não compila
-# (usa std::os::unix::fs::symlink e crate xdg, ambos Unix-only), então
-# nenhum toolchain — MSVC ou GNU — resolve. Upstream não publica binário
-# Windows. Usuários Windows ficam sem tinty até upstream portar.
 
 # Optional — uncomment to force-install latest from crates.io even if brew/scoop
 # has a version available.

@@ -3,11 +3,13 @@
 {{- $email         := promptStringOnce . "email"         "Email for git"                       "" -}}
 {{- $machineClass  := promptChoiceOnce . "machineClass"  "Machine class"  (list "personal" "work") "personal" -}}
 {{- $defaultFont   := promptChoiceOnce . "defaultFont"   "Default terminal font" (list "JetBrainsMono Nerd Font" "Maple Mono NF") "JetBrainsMono Nerd Font" -}}
+{{- $theme         := promptChoiceOnce . "theme"         "Theme (palette in .chezmoidata/themes.toml)" (list "oasis-lagoon-dark") "oasis-lagoon-dark" -}}
 
 [data]
     fullName     = {{ $fullName | quote }}
     email        = {{ $email | quote }}
     machineClass = {{ $machineClass | quote }}
     defaultFont  = {{ $defaultFont | quote }}
+    theme        = {{ $theme | quote }}
     os           = {{ .chezmoi.os | quote }}
     arch         = {{ .chezmoi.arch | quote }}
