@@ -34,8 +34,7 @@ brew "git"
 brew "gh"
 brew "jq"
 brew "yq"
-brew "tree"
-brew "wget"
+brew "wget"             # no Windows vem via scoop main/wget (tree foi dropado — usar `eza --tree`)
 brew "gnupg"              # required by mise node plugin for GPG verification
 brew "lazygit"            # TUI git client (alias `lg` no Nushell)
 

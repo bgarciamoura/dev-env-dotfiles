@@ -22,6 +22,7 @@
     { "Source": "main",   "Name": "eza" },
     { "Source": "main",   "Name": "jq" },
     { "Source": "main",   "Name": "yq" },
+    { "Source": "main",   "Name": "wget" },
     { "Source": "main",   "Name": "neovim" },
     { "Source": "main",   "Name": "mise" },
     { "Source": "main",   "Name": "rustup" },
