@@ -142,7 +142,20 @@ if command -v mise >/dev/null 2>&1; then
   mise ls || true
 fi
 
-# 9. Register Nushell as a login shell (optional)
+# 9. Run Neovim install-deps.sh now that mise's Python is available.
+# Running this AFTER `mise install` ensures `pip --user` uses mise's Python,
+# avoiding PEP 668 errors on Homebrew's externally-managed Python.
+NVIM_DEPS="$HOME/.config/nvim/scripts/install-deps.sh"
+if [ -f "$NVIM_DEPS" ]; then
+  log "Running Neovim install-deps.sh with mise environment"
+  if command -v mise >/dev/null 2>&1; then
+    mise exec -- bash "$NVIM_DEPS" || warn "install-deps.sh exited non-zero — inspect output above."
+  else
+    bash "$NVIM_DEPS" || warn "install-deps.sh exited non-zero — inspect output above."
+  fi
+fi
+
+# 10. Register Nushell as a login shell (optional)
 NU_PATH="$(command -v nu || true)"
 if [ -n "$NU_PATH" ] && ! grep -Fxq "$NU_PATH" /etc/shells; then
   log "Registering Nushell in /etc/shells (sudo required)"

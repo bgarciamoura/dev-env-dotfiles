@@ -1,0 +1,34 @@
+local wezterm = require 'wezterm'
+
+local M = {}
+
+local function is_windows()
+    return wezterm.target_triple:find('windows') ~= nil
+end
+
+function M.apply(config)
+    config.enable_kitty_graphics = true
+    config.enable_kitty_keyboard = true
+
+    if is_windows() then
+        config.default_prog = { 'nu.exe' }
+    else
+        -- Absolute path resolved at chezmoi-apply time. WezTerm on macOS is
+        -- spawned by launchd with a minimal PATH (/usr/bin:/bin:/usr/sbin:/sbin),
+        -- so a bare `nu` would fail to start.
+        --
+        -- On macOS, Nushell defaults to ~/Library/Application Support/nushell/
+        -- (via dirs::config_dir) and ignores XDG_CONFIG_HOME. We pass --config
+        -- and --env-config explicitly so chezmoi-managed config.nu/env.nu in
+        -- ~/.config/nushell/ is loaded — without this, $env.PATH from env.nu
+        -- never runs and tools like nvim, brew, etc. aren't found.
+        config.default_prog = {
+            '{{ lookPath "nu" }}',
+            '--login',
+            '--env-config', '{{ .chezmoi.homeDir }}/.config/nushell/env.nu',
+            '--config',     '{{ .chezmoi.homeDir }}/.config/nushell/config.nu',
+        }
+    end
+end
+
+return M
