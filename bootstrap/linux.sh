@@ -48,13 +48,16 @@ if [ -x /home/linuxbrew/.linuxbrew/bin/brew ]; then
   eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
 fi
 
-# Persist brew on PATH for future bash/zsh sessions (Nushell handles it via env.nu)
+# Persist brew on PATH for future bash sessions (Nushell handles it via env.nu).
+# Escrevemos só em .bashrc — em login shell, o .profile padrão do Ubuntu/Debian
+# faz source do .bashrc no fim, então cobre os dois cenários sem duplicar PATH.
+# Escrever em .profile + .bashrc faria `brew shellenv` rodar 2x em login shell
+# (que é como WSL inicia bash por padrão), prependando linuxbrew/bin duplicado
+# no PATH. Mesmo padrão usado para a ativação do mise logo abaixo.
 BREW_SHELLENV_LINE='eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"'
-for profile in "$HOME/.profile" "$HOME/.bashrc"; do
-  if [ -f "$profile" ] && ! grep -Fq "$BREW_SHELLENV_LINE" "$profile"; then
-    echo "$BREW_SHELLENV_LINE" >> "$profile"
-  fi
-done
+if [ -f "$HOME/.bashrc" ] && ! grep -Fq "$BREW_SHELLENV_LINE" "$HOME/.bashrc"; then
+  echo "$BREW_SHELLENV_LINE" >> "$HOME/.bashrc"
+fi
 
 log "Updating Homebrew"
 brew update
