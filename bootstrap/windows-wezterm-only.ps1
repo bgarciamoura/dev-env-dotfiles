@@ -159,10 +159,12 @@ if (Test-Path $ScoopFile) {
 }
 
 # 4. Apply dotfiles (wezterm-only profile).
-# We pass --promptString profile=wezterm-only so the chezmoi prompt accepts the
-# answer non-interactively. Other prompts (fullName, email, theme, useWsl,
-# wslDistro, etc.) still appear interactively on first run — answer them and
-# they persist in chezmoi.toml for subsequent applies.
+# Os flags --promptString/--promptChoice do chezmoi são silenciosamente
+# IGNORADOS pelas variantes *Once (twpayne/chezmoi#2945, #3345 — confirmado em
+# v2.70.2). Workaround: pré-popular [data] em chezmoi.toml antes do init.
+# promptChoiceOnce reusa valores já presentes em .chezmoi.config.data e pula o
+# prompt; outros prompts (fullName, email, theme, useWsl, wslDistro, etc.) ainda
+# aparecem interativamente.
 Log "Applying dotfiles with chezmoi (profile=wezterm-only)"
 $ChezmoiSource = Join-Path $RepoRoot 'dotfiles'
 
@@ -178,13 +180,22 @@ foreach ($p in $chezmoiCfgCandidates) {
 # --no-tty força stdin line-buffered nos prompts. Sem isso, chezmoi v2.70+ usa
 # huh (Charm) em raw mode e cada keystroke vira "confirma com default".
 if (-not $chezmoiInitialized) {
-    chezmoi init --source $ChezmoiSource --apply --no-tty --promptString profile=wezterm-only
+    # Sem XDG_CONFIG_HOME setado (vem só no profile=full), chezmoi default no
+    # Windows é %APPDATA%\chezmoi\. Escrevemos lá pra pre-seedar profile.
+    $cmCfgDir = Join-Path $env:APPDATA 'chezmoi'
+    $cmCfg    = Join-Path $cmCfgDir 'chezmoi.toml'
+    New-Item -ItemType Directory -Path $cmCfgDir -Force | Out-Null
+    @'
+[data]
+    profile = "wezterm-only"
+'@ | Set-Content -Path $cmCfg -Encoding UTF8
+    chezmoi init --source $ChezmoiSource --apply --no-tty
 } else {
     # Already initialized: apply with the same source. If the user previously
     # ran the full bootstrap on this machine, .chezmoi.toml still has
     # profile="full" — they need to either edit it or run
-    # `chezmoi init --source $ChezmoiSource --force --promptString profile=wezterm-only`
-    # to re-prompt. We don't force here to avoid surprising users.
+    # `chezmoi init --source $ChezmoiSource --force` after editing [data] to
+    # re-prompt. We don't force here to avoid surprising users.
     Warn "chezmoi already initialized on this machine. To switch profiles, run: chezmoi edit-config (and change profile = `"wezterm-only`")"
     chezmoi apply --source $ChezmoiSource --no-tty
 }
