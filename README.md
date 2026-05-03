@@ -52,7 +52,7 @@ cd C:\Users\<you>\projects\new-dev-setup
 .\install.ps1
 ```
 
-> **PowerShell 7+ required.** The entry point `install.ps1` is ASCII-only and can be launched from Windows PowerShell 5.1; it auto-installs PowerShell 7 via `winget` on the first run and re-launches itself under `pwsh`. The rest of the bootstrap (which contains Portuguese messages and other UTF-8 content) runs under PS 7 where UTF-8 is the default parser encoding.
+> **PowerShell 7+ required.** The entry point `install.ps1` is ASCII-only and can be launched from Windows PowerShell 5.1; it auto-installs PowerShell 7 via `winget` on the first run and re-launches itself under `pwsh`. The rest of the bootstrap (which contains non-ASCII content like em-dashes and accented characters) runs under PS 7 where UTF-8 is the default parser encoding.
 
 ### macOS / Ubuntu / Debian
 
@@ -134,39 +134,39 @@ chezmoi apply
 
 Note: switching from `full` to `wezterm-only` does NOT uninstall packages — it only stops materializing their config files. Use `scoop uninstall` manually if you want to free disk space.
 
-## Versões: runtimes e mínimos de CLI
+## Versions: runtimes and CLI minimums
 
-Dois pontos de controle de versão, separados por intenção:
+Two version control points, separated by intent:
 
-**1. Runtimes de linguagem via `mise`** (`dotfiles/dot_config/mise/config.toml`)
+**1. Language runtimes via `mise`** (`dotfiles/dot_config/mise/config.toml`)
 
-Pin exato de Node, Python, etc. Cross-OS. Rodado automaticamente pelo bootstrap via `mise install` após `chezmoi apply`. Edite o `[tools]` e rode `chezmoi apply && mise install` para aplicar mudanças.
+Exact pin for Node, Python, etc. Cross-OS. Run automatically by the bootstrap via `mise install` after `chezmoi apply`. Edit `[tools]` and run `chezmoi apply && mise install` to apply changes.
 
 ```toml
 [tools]
-node = "22"      # major pinado, patch na mais recente
+node = "22"      # major pinned, latest patch
 python = "3.13"
-# go = "1.23"    # adicione conforme precisar
+# go = "1.23"    # add as needed
 ```
 
-Sintaxes aceitas: pin exato (`"22.11.0"`), major (`"22"`), `"lts"` (só node), `"latest"`, ou `"system"`.
+Accepted syntaxes: exact pin (`"22.11.0"`), major (`"22"`), `"lts"` (node only), `"latest"`, or `"system"`.
 
-**2. Mínimos para CLIs instalados via brew/scoop** (`packages/versions.env`)
+**2. Minimums for CLIs installed via brew/scoop** (`packages/versions.env`)
 
-Brew e Scoop sempre puxam a última versão do package manager — aqui você declara a **versão mínima** aceitável. Se o binário ficar abaixo, o bootstrap aborta com instrução de upgrade.
+Brew and Scoop always pull the latest version from the package manager — here you declare the **minimum acceptable version**. If the installed binary falls below it, the bootstrap aborts with an upgrade instruction.
 
 ```
 NVIM_MIN_VERSION=0.12.0
 NU_MIN_VERSION=0.92.0
 ```
 
-Para exigir um novo mínimo: aumente o valor no arquivo. Nenhum código de gate muda.
+To require a new minimum: bump the value in the file. No gating code changes.
 
-### Troubleshooting do `mise install`
+### Troubleshooting `mise install`
 
-Depois do bootstrap, o script imprime `mise ls` — o estado real dos runtimes. Se algum runtime esperado não aparecer com versão instalada:
+After the bootstrap, the script prints `mise ls` — the actual state of the runtimes. If a runtime you expect doesn't show up as installed:
 
-1. **Rode manualmente com verbose** para ver a causa:
+1. **Re-run manually with verbose** to see the cause:
    ```powershell
    mise install node@22 --verbose
    ```
@@ -174,18 +174,18 @@ Depois do bootstrap, o script imprime `mise ls` — o estado real dos runtimes. 
    mise install node@22 --verbose
    ```
 
-2. **Dependência GPG:** o plugin `node` do mise verifica downloads via GPG. `gpg`/`gnupg` estão declarados no `scoopfile.json` e `Brewfile`, mas se o binário não estiver no PATH, você verá `gpg not found, skipping verification`. Reabra o terminal (ou rode `scoop install gpg` / `brew install gnupg`) e tente de novo.
+2. **GPG dependency:** mise's `node` plugin verifies downloads via GPG. `gpg`/`gnupg` are declared in `scoopfile.json` and `Brewfile`, but if the binary is not on PATH you'll see `gpg not found, skipping verification`. Reopen your terminal (or run `scoop install gpg` / `brew install gnupg`) and retry.
 
-3. **Warning do Rekor (cosmético):** mensagens do tipo `Cannot parse Rekor public key ... Ecdsa-P256 ... OID: 1.2.840.10045.2.1` vêm de um bug upstream no `sigstore-rs` ([jdx/mise Discussion #8217](https://github.com/jdx/mise/discussions/8217)) — não abortam o install. Desaparecerão quando o mise bumpar a dependência.
+3. **Rekor warning (cosmetic):** messages like `Cannot parse Rekor public key ... Ecdsa-P256 ... OID: 1.2.840.10045.2.1` come from an upstream bug in `sigstore-rs` ([jdx/mise Discussion #8217](https://github.com/jdx/mise/discussions/8217)) — they don't abort the install. They'll go away when mise bumps the dependency.
 
-4. **Nuclear option:** se GPG + retry manual falharem, pule a verificação só pra esse install:
+4. **Nuclear option:** if GPG + manual retry both fail, skip verification just for this install:
    ```powershell
    $env:MISE_NODE_VERIFY=$false; mise install node@22
    ```
    ```bash
    MISE_NODE_VERIFY=false mise install node@22
    ```
-   Trade-off explícito: você perde a checagem criptográfica do binário.
+   Explicit trade-off: you lose cryptographic verification of the binary.
 
 ## Keeping machines in sync
 
@@ -325,7 +325,7 @@ new-dev-setup/
 │   ├── scoopfile.json           # Windows packages — full
 │   ├── scoopfile-wezterm-only.json # Windows packages — wezterm-only subset
 │   ├── cargo-tools.txt          # Rust tools (universal fallback)
-│   └── versions.env             # Versões mínimas dos CLIs (gates pós-instalação)
+│   └── versions.env             # Minimum CLI versions (post-install gates)
 └── dotfiles/                    # Chezmoi source directory
     ├── .chezmoiroot
     ├── .chezmoi.toml.tmpl       # Initial prompts
@@ -355,7 +355,7 @@ new-dev-setup/
         ├── atuin/
         │   └── config.toml
         ├── mise/
-        │   └── config.toml      # Runtimes pinados (node, python, ...)
+        │   └── config.toml      # Pinned runtimes (node, python, ...)
         ├── yazi/
         │   └── yazi.toml
         └── carapace/
@@ -365,15 +365,15 @@ new-dev-setup/
 ## Day-two notes
 
 - **Atuin sync**: after install, run `atuin register` on your first machine, then `atuin login` on the others. History syncs automatically.
-- **Neovim config**: provisionada automaticamente. Um script `.chezmoiscripts/run_onchange_after_20-clone-nvim.*` clona [`bgarciamoura/neovim`](https://github.com/bgarciamoura/neovim) em `~/.config/nvim` durante `chezmoi apply` e roda `scripts/install-deps.sh` do próprio repo. Lógica idempotente: se `~/.config/nvim` já for working copy do repo, pula; se existir com outro conteúdo, faz backup em `~/.config/nvim.bak-YYYYMMDD-HHMMSS` antes de clonar. Para sincronizar entre máquinas depois do bootstrap, `cd ~/.config/nvim && git pull` — é um working copy Git normal. Deps externas (ripgrep, Node ≥18, Python ≥3.10, git, Nerd Font) já são cobertas pelo Brewfile/scoopfile + mise.
+- **Neovim config**: provisioned automatically. A `.chezmoiscripts/run_onchange_after_20-clone-nvim.*` script clones [`bgarciamoura/neovim`](https://github.com/bgarciamoura/neovim) into `~/.config/nvim` during `chezmoi apply` and runs the repo's own `scripts/install-deps.sh`. Idempotent logic: if `~/.config/nvim` is already a working copy of the repo, skip; if it exists with different content, back up to `~/.config/nvim.bak-YYYYMMDD-HHMMSS` before cloning. To sync between machines after the bootstrap, `cd ~/.config/nvim && git pull` — it's a normal Git working copy. External deps (ripgrep, Node ≥18, Python ≥3.10, git, Nerd Font) are already covered by Brewfile/scoopfile + mise.
 - **Themes**: see the dedicated [Themes](#themes) section above for how to switch palettes or add new ones.
 - **Upgrading everything**: run `./install.sh` (or `install.ps1`) again — it's idempotent.
 
-## Windows: paths resolvidos via env vars
+## Windows: paths resolved via env vars
 
-No Windows várias ferramentas da stack ignoram XDG por padrão e procuram config em `%APPDATA%\<tool>\` (Nushell, Atuin, Yazi) ou `%LOCALAPPDATA%\<tool>\` (Mise). Para que `~/.config/*` seja a fonte única de verdade em todos os SOs, o Chezmoi roda um script `.ps1` em Windows que grava variáveis persistentes no escopo **User** do registro (`HKCU\Environment`):
+On Windows, several tools in the stack ignore XDG by default and look for config in `%APPDATA%\<tool>\` (Nushell, Atuin, Yazi) or `%LOCALAPPDATA%\<tool>\` (Mise). For `~/.config/*` to be the single source of truth across all OSes, Chezmoi runs a `.ps1` script on Windows that writes persistent variables in the **User** scope of the registry (`HKCU\Environment`):
 
-| Variável | Valor |
+| Variable | Value |
 |---|---|
 | `XDG_CONFIG_HOME` | `%USERPROFILE%\.config` |
 | `XDG_DATA_HOME` | `%USERPROFILE%\.local\share` |
@@ -384,9 +384,9 @@ No Windows várias ferramentas da stack ignoram XDG por padrão e procuram confi
 | `YAZI_CONFIG_HOME` | `%USERPROFILE%\.config\yazi` |
 | `_ZO_DATA_DIR` | `%USERPROFILE%\.local\share\zoxide` |
 
-O script é idempotente (compara antes de escrever). **Caveat**: `SetEnvironmentVariable('User')` só aparece em processos **novos** — feche e reabra o terminal após o primeiro `install.ps1`. Nushell precisa ser ≥0.92 para honrar `XDG_CONFIG_HOME` no Windows; o bootstrap avisa se a versão for menor.
+The script is idempotent (compares before writing). **Caveat**: `SetEnvironmentVariable('User')` only takes effect in **new** processes — close and reopen the terminal after the first `install.ps1`. Nushell must be ≥0.92 to honor `XDG_CONFIG_HOME` on Windows; the bootstrap warns if the installed version is older.
 
-Carapace e Neovim são cobertos automaticamente por herdarem `XDG_CONFIG_HOME`. WezTerm já reconhece `~/.config/wezterm/wezterm.lua` nativamente. Zellij não roda em Windows nativo (só WSL), então foi ignorado.
+Carapace and Neovim are covered automatically since they inherit `XDG_CONFIG_HOME`. WezTerm already recognizes `~/.config/wezterm/wezterm.lua` natively. Zellij doesn't run on native Windows (WSL only), so it was skipped.
 
 ## Troubleshooting
 
@@ -394,4 +394,4 @@ Carapace e Neovim são cobertos automaticamente por herdarem `XDG_CONFIG_HOME`. 
 - **Nushell doesn't find Carapace** — run `carapace _carapace nushell | save -f ~/.cache/carapace/init.nu` and make sure your `env.nu` sources it.
 - **Fonts not rendering** — on Linux, run `fc-cache -fv` after install. On Windows, restart WezTerm.
 - **Homebrew on Linux not on PATH** — add `eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"` to your shell profile (the installer does this automatically on first run).
-- **Windows: Nushell/Atuin/Yazi abrem com config padrão** — o script PowerShell do Chezmoi setou as env vars, mas o terminal atual não as vê. Feche e reabra o terminal. Se persistir, verifique `[Environment]::GetEnvironmentVariable('XDG_CONFIG_HOME','User')`.
+- **Windows: Nushell/Atuin/Yazi open with default config** — the Chezmoi PowerShell script set the env vars, but the current terminal doesn't see them. Close and reopen the terminal. If it persists, check `[Environment]::GetEnvironmentVariable('XDG_CONFIG_HOME','User')`.
