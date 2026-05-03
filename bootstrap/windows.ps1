@@ -1,18 +1,19 @@
 # Windows 11 bootstrap: Scoop + buckets + scoopfile.json + cargo + chezmoi apply.
 # Strategy: Scoop gives us bleeding-edge versions of dev tools straight from GitHub.
-# We add the 'main', 'extras', and 'nerd-fonts' buckets and then run `scoop import`.
+# We add the 'main', 'extras', 'nerd-fonts', and 'versions' buckets and run `scoop import`.
+#
+# Shared Windows helpers (logging, scoop setup, nerd-font repair, chezmoi init
+# detection) live in bootstrap/_windows-common.ps1 and are dot-sourced below.
 $ErrorActionPreference = 'Stop'
-
-function Log  { param([string]$msg) Write-Host "==> $msg" -ForegroundColor Cyan }
-function Warn { param([string]$msg) Write-Host "!!  $msg" -ForegroundColor Yellow }
-function Die  { param([string]$msg) Write-Host "xx  $msg" -ForegroundColor Red; exit 1 }
 
 $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $RepoRoot  = Split-Path -Parent $ScriptDir
 
+. (Join-Path $ScriptDir '_windows-common.ps1')
+
 # Lê packages/versions.env (formato KEY=VALUE) para um hashtable. Mantemos um
-# parser local em vez de exigir um módulo porque PS 5.1 não tem helper nativo
-# e queremos zero dependências no primeiro boot.
+# parser local em vez de exigir um módulo porque queremos zero dependências no
+# primeiro boot (e a wezterm-only profile não precisa disso).
 function Read-VersionsEnv {
     param([Parameter(Mandatory)][string]$Path)
     $map = @{}
@@ -33,159 +34,23 @@ if (-not $Versions.ContainsKey('NU_MIN_VERSION'))   { Die "versions.env não def
 $NvimMinVersion = [version]$Versions['NVIM_MIN_VERSION']
 $NuMinVersion   = [version]$Versions['NU_MIN_VERSION']
 
-# 1. Scoop
-if (-not (Get-Command scoop -ErrorAction SilentlyContinue)) {
-    Log "Installing Scoop"
-    # Ensure TLS 1.2 for legacy Windows builds
-    [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.SecurityProtocolType]::Tls12
-    Invoke-Expression (Invoke-RestMethod -Uri 'https://get.scoop.sh')
-}
-
-# 2. Essential buckets
-# `scoop bucket add` imprime WARN via Write-Host (stream 6) quando o bucket
-# já existe — redirecionamento de stderr não suprime. Mais simples: checar
-# diretamente no filesystem se o bucket já está clonado em ~\scoop\buckets\.
-Log "Configuring Scoop buckets"
-$ScoopBucketDir = Join-Path $env:USERPROFILE 'scoop\buckets'
-$buckets = @('extras', 'nerd-fonts', 'versions')
-foreach ($b in $buckets) {
-    if (-not (Test-Path (Join-Path $ScoopBucketDir $b))) {
-        Log "Adding scoop bucket: $b"
-        scoop bucket add $b
-    }
-}
-
-# `git` is a hard requirement for scoop buckets
-if (-not (Get-Command git -ErrorAction SilentlyContinue)) {
-    Log "Installing git (scoop prerequisite)"
-    scoop install git
-}
+# 1. Scoop + buckets + git
+Install-ScoopIfMissing
+Add-ScoopBucketsIfMissing -Buckets @('extras', 'nerd-fonts', 'versions')
+Install-GitForScoop
 
 Log "Updating Scoop and all installed packages"
 scoop update
 
-# 3. Install packages from scoopfile.json
-# Instalação de nerd-fonts no Scoop falha com 'Access is denied' quando o
-# serviço FontCache do Windows está com handle aberto num .ttf que o installer
-# script quer sobrescrever (typical após tentativa anterior ou com terminal
-# usando a fonte em outra janela). O fix canônico é parar FontCache, remover
-# os .ttf e suas entradas em HKCU\...\Fonts, reiniciar FontCache e reinstalar.
+# 2. Install packages from scoopfile.json
 $ScoopFile = Join-Path $RepoRoot 'packages\scoopfile.json'
-
-function Test-IsAdmin {
-    $id = [System.Security.Principal.WindowsIdentity]::GetCurrent()
-    $principal = [System.Security.Principal.WindowsPrincipal]::new($id)
-    return $principal.IsInRole([System.Security.Principal.WindowsBuiltInRole]::Administrator)
-}
-
-function Repair-ScoopNerdFont {
-    param(
-        [Parameter(Mandatory)][string]$App,
-        [Parameter(Mandatory)][string]$Bucket,
-        [Parameter(Mandatory)][string[]]$FilePatterns
-    )
-    $fontDir = Join-Path $env:LOCALAPPDATA 'Microsoft\Windows\Fonts'
-    $regKey  = 'HKCU:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Fonts'
-    $isAdmin = Test-IsAdmin
-
-    Log "Repair: $App — limpando instalação órfã"
-
-    if (-not $isAdmin) {
-        Warn "Sessão não-elevada: Stop-Service FontCache será pulado. Se algum .ttf estiver locked pelo FontCache, o repair vai falhar. Para garantir: reabra PowerShell como administrador e rode .\\install.ps1 de novo."
-    }
-
-    # scoop uninstall é best-effort: falha silenciosa se app não está instalado
-    # ou se o uninstaller script também bateu no lock. Ok — seguimos.
-    scoop uninstall $App 2>$null | Out-Null
-
-    # Parar FontCache libera os handles que ele segura nos .ttf. Requer admin.
-    $fontCacheRunning = $false
-    if ($isAdmin) {
-        try {
-            $svc = Get-Service -Name FontCache -ErrorAction Stop
-            if ($svc.Status -eq 'Running') {
-                $fontCacheRunning = $true
-                Stop-Service FontCache -Force -ErrorAction SilentlyContinue
-            }
-        } catch {
-            # Serviço pode não existir em edições mínimas do Windows — ignora.
-        }
-    }
-
-    try {
-        if (Test-Path $fontDir) {
-            foreach ($pattern in $FilePatterns) {
-                Get-ChildItem -Path $fontDir -Filter $pattern -File -ErrorAction SilentlyContinue | ForEach-Object {
-                    try {
-                        Remove-Item -LiteralPath $_.FullName -Force -ErrorAction Stop
-                    } catch {
-                        Warn "Arquivo font '$($_.Name)' ainda locked. Feche apps que usam a fonte (WezTerm, VS Code, terminais) e rode novamente."
-                    }
-                }
-            }
-        }
-
-        if (Test-Path $regKey) {
-            $props = (Get-Item $regKey).Property
-            foreach ($pattern in $FilePatterns) {
-                # Installer grava como '<basename> (TrueType)' — converter padrão de arquivo pro padrão do valor de registro.
-                $regPattern = ($pattern -replace '\.(ttf|otf)$', ' (TrueType)')
-                $props | Where-Object { $_ -like $regPattern } | ForEach-Object {
-                    Remove-ItemProperty -Path $regKey -Name $_ -Force -ErrorAction SilentlyContinue
-                }
-            }
-        }
-    } finally {
-        if ($fontCacheRunning) {
-            Start-Service FontCache -ErrorAction SilentlyContinue
-        }
-    }
-
-    try {
-        scoop install "$Bucket/$App"
-        Log "Font '$App' reinstalada com sucesso."
-    } catch {
-        Warn "Reinstalação de '$App' ainda falhou: $($_.Exception.Message)"
-        Warn "Workarounds: (a) reabra o PowerShell como administrador e rode o bootstrap de novo, (b) feche TODOS os terminais/editores que usam a fonte e tente, ou (c) instale global com 'sudo scoop install -g $Bucket/$App'."
-    }
-}
-
 if (Test-Path $ScoopFile) {
-    Log "Importing packages from scoopfile.json"
-    $importFailed = $false
-    try {
-        scoop import $ScoopFile
-    } catch {
-        $importFailed = $true
-        Warn "scoop import reportou falha: $($_.Exception.Message)"
-        Warn "Tentando remediar fontes nerd-fonts individualmente..."
-    }
-
-    if ($importFailed) {
-        # Padrões dos arquivos que cada installer script copia para Fonts/.
-        # Confirmados em 04/2026 nos manifests do matthewjberger/scoop-nerd-fonts.
-        # JetBrainsMono-NF usa filter '*NerdFont-*' — família inclui variantes
-        # NL (No Ligatures), Mono e Propo; padrão DEVE ter wildcard entre
-        # 'JetBrainsMono' e 'NerdFont' para pegar 'JetBrainsMonoNLNerdFont*'.
-        $fontPatternMap = @{
-            'JetBrainsMono-NF' = @('JetBrainsMono*NerdFont*.ttf')
-            'Maple-Mono-NF'    = @('MapleMono-NF-*.ttf')
-        }
-        $scoopJson = Get-Content $ScoopFile -Raw | ConvertFrom-Json
-        foreach ($app in ($scoopJson.apps | Where-Object { $_.Source -eq 'nerd-fonts' })) {
-            $patterns = $fontPatternMap[$app.Name]
-            if (-not $patterns) {
-                Warn "Sem padrão de arquivo conhecido para '$($app.Name)' — reparo pulado."
-                continue
-            }
-            Repair-ScoopNerdFont -App $app.Name -Bucket $app.Source -FilePatterns $patterns
-        }
-    }
+    Invoke-ScoopImportWithFontRepair -ScoopFile $ScoopFile -EntryScript 'install.ps1'
 } else {
     Warn "scoopfile.json not found at $ScoopFile — skipping bulk install"
 }
 
-# 4. Rust toolchain + cargo tools
+# 3. Rust toolchain + cargo tools
 if (-not (Get-Command cargo -ErrorAction SilentlyContinue)) {
     Log "Installing rustup"
     scoop install rustup
@@ -232,9 +97,10 @@ if (Test-Path $CargoFile) {
     }
 }
 
-# 5. Neovim version gate — exige >= 0.12.0. Mesma técnica do Nushell logo abaixo:
-# strip de suffix pre-release antes do [version]::TryParse porque builds nightly
-# (ex: '0.12.0-dev+g1234abc') fariam o parse retornar $null e o comparador virar.
+# 4. Neovim version gate — exige >= NVIM_MIN_VERSION. Mesma técnica do Nushell
+# logo abaixo: strip de suffix pre-release antes do [version]::TryParse porque
+# builds nightly (ex: '0.12.0-dev+g1234abc') fariam o parse retornar $null e o
+# comparador virar.
 if (Get-Command nvim -ErrorAction SilentlyContinue) {
     # 'nvim --version' linha 1: 'NVIM v0.12.1'
     $nvRaw = ((nvim --version 2>$null | Select-Object -First 1) -replace '^NVIM\s+v?', '').Trim()
@@ -252,10 +118,9 @@ if (Get-Command nvim -ErrorAction SilentlyContinue) {
     Die "Neovim não encontrado no PATH após a instalação."
 }
 
-# 6. Nushell version gate — XDG_CONFIG_HOME only honored on Windows from 0.92+.
+# 5. Nushell version gate — XDG_CONFIG_HOME only honored on Windows from 0.92+.
 # Nightly builds emit '0.113.0-nightly.abc1234'; strip suffix before parsing
-# so [version]::TryParse doesn't silently return $null (PS 5.1 treats $null -lt
-# version as $true, flipping the check).
+# so [version]::TryParse doesn't silently return $null.
 if (Get-Command nu -ErrorAction SilentlyContinue) {
     $nuRaw = (nu --version 2>$null | Select-Object -First 1).Trim()
     $nuClean = ($nuRaw -split '[-+ ]')[0]
@@ -270,39 +135,23 @@ if (Get-Command nu -ErrorAction SilentlyContinue) {
     }
 }
 
-# 7. Apply dotfiles (also runs the Windows env-var chezmoi script)
-Log "Applying dotfiles with chezmoi"
-$ChezmoiSource = Join-Path $RepoRoot 'dotfiles'
-
-# chezmoi grava seu config.toml em $XDG_CONFIG_HOME\chezmoi\ quando a var está
-# setada; senão cai no default Windows de $APPDATA\chezmoi\. Na primeira execução
-# o XDG_CONFIG_HOME ainda não foi persistido pelo script de env vars, então o
-# arquivo real pode estar em qualquer um dos dois. Checar ambos evita re-prompt
-# desnecessário (promptStringOnce) em execuções subsequentes.
-$chezmoiCfgCandidates = @(
-    (Join-Path $env:USERPROFILE '.config\chezmoi\chezmoi.toml'),
-    (Join-Path $env:APPDATA 'chezmoi\chezmoi.toml')
-)
-$chezmoiInitialized = $false
-foreach ($p in $chezmoiCfgCandidates) {
-    if (Test-Path $p) { $chezmoiInitialized = $true; break }
-}
-
+# 6. Apply dotfiles (also runs the Windows env-var chezmoi script)
 # --no-tty força stdin line-buffered nos prompts. Sem isso, chezmoi v2.70+ usa
 # huh (Charm) em raw mode e cada keystroke vira "confirma com default".
-if (-not $chezmoiInitialized) {
+Log "Applying dotfiles with chezmoi"
+$ChezmoiSource = Join-Path $RepoRoot 'dotfiles'
+if (-not (Test-ChezmoiInitialized)) {
     chezmoi init --source $ChezmoiSource --apply --no-tty
 } else {
     chezmoi apply --source $ChezmoiSource --no-tty
 }
 
-# 8. Install language runtimes from ~/.config/mise/config.toml
+# 7. Install language runtimes from ~/.config/mise/config.toml
 #
 # mise install retorna exit 0 mesmo quando um runtime individual falha
-# silenciosamente (ex: 'gpg not found, skipping verification' para node,
-# ou o warn Rekor do sigstore-rs que não aborta mas pode mascarar falha real).
-# Rodar 'mise ls' depois expõe o estado real e serve de diagnóstico visual
-# sem precisar parsear o output da instalação.
+# silenciosamente (ex: 'gpg not found, skipping verification' para node, ou o
+# warn Rekor do sigstore-rs que não aborta mas pode mascarar falha real).
+# Rodar 'mise ls' depois expõe o estado real e serve de diagnóstico visual.
 if (Get-Command mise -ErrorAction SilentlyContinue) {
     Log "Installing language runtimes via mise"
     mise install
@@ -316,7 +165,7 @@ if (Get-Command mise -ErrorAction SilentlyContinue) {
     }
 }
 
-# 9. Refresh font cache (Windows needs user to log out for new fonts in some apps, but WezTerm sees them immediately)
+# 8. Refresh font cache (Windows needs user to log out for new fonts in some apps, but WezTerm sees them immediately)
 Log "Fonts installed via Scoop's nerd-fonts bucket should be available to WezTerm on next launch."
 
 Log "Windows bootstrap complete."
