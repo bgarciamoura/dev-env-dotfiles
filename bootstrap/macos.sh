@@ -88,6 +88,19 @@ if command -v mise >/dev/null 2>&1; then
   mise install || warn "mise install teve falhas (non-fatal). Veja 'mise ls' abaixo."
   log "Estado atual dos runtimes gerenciados por mise:"
   mise ls || true
+
+  # Persist mise activation. macOS default é zsh desde Catalina; também cobrimos
+  # bash pra quem trocou. Sem isso, runtimes do mise (node/python) não estão no
+  # PATH em shells novos — Nushell já ativa via vendor/autoload/mise.nu.
+  MISE_ZSH_LINE='eval "$(mise activate zsh)"'
+  touch "$HOME/.zshrc"
+  if ! grep -Fq "$MISE_ZSH_LINE" "$HOME/.zshrc"; then
+    echo "$MISE_ZSH_LINE" >> "$HOME/.zshrc"
+  fi
+  MISE_BASH_LINE='eval "$(mise activate bash)"'
+  if [ -f "$HOME/.bash_profile" ] && ! grep -Fq "$MISE_BASH_LINE" "$HOME/.bash_profile"; then
+    echo "$MISE_BASH_LINE" >> "$HOME/.bash_profile"
+  fi
 fi
 
 # 7. Run Neovim install-deps.sh now that mise's Python is available.

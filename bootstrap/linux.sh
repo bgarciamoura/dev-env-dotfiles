@@ -140,6 +140,14 @@ if command -v mise >/dev/null 2>&1; then
   mise install || warn "mise install teve falhas (non-fatal). Veja 'mise ls' abaixo."
   log "Estado atual dos runtimes gerenciados por mise:"
   mise ls || true
+
+  # Persist mise activation for future bash sessions. Sem isso, `node`/`python`
+  # gerenciados pelo mise não aparecem no PATH em shells novos — só em Nushell,
+  # que ativa via vendor/autoload/mise.nu. Mesmo padrão idempotente do brew.
+  MISE_ACTIVATE_LINE='eval "$(mise activate bash)"'
+  if [ -f "$HOME/.bashrc" ] && ! grep -Fq "$MISE_ACTIVATE_LINE" "$HOME/.bashrc"; then
+    echo "$MISE_ACTIVATE_LINE" >> "$HOME/.bashrc"
+  fi
 fi
 
 # 9. Run Neovim install-deps.sh now that mise's Python is available.
