@@ -175,8 +175,10 @@ foreach ($p in $chezmoiCfgCandidates) {
     if (Test-Path $p) { $chezmoiInitialized = $true; break }
 }
 
+# --no-tty força stdin line-buffered nos prompts. Sem isso, chezmoi v2.70+ usa
+# huh (Charm) em raw mode e cada keystroke vira "confirma com default".
 if (-not $chezmoiInitialized) {
-    chezmoi init --source $ChezmoiSource --apply --promptString profile=wezterm-only
+    chezmoi init --source $ChezmoiSource --apply --no-tty --promptString profile=wezterm-only
 } else {
     # Already initialized: apply with the same source. If the user previously
     # ran the full bootstrap on this machine, .chezmoi.toml still has
@@ -184,7 +186,7 @@ if (-not $chezmoiInitialized) {
     # `chezmoi init --source $ChezmoiSource --force --promptString profile=wezterm-only`
     # to re-prompt. We don't force here to avoid surprising users.
     Warn "chezmoi already initialized on this machine. To switch profiles, run: chezmoi edit-config (and change profile = `"wezterm-only`")"
-    chezmoi apply --source $ChezmoiSource
+    chezmoi apply --source $ChezmoiSource --no-tty
 }
 
 Log "Wezterm-only bootstrap complete."

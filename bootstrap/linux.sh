@@ -123,10 +123,13 @@ fc-cache -fv >/dev/null
 
 # 7. Apply dotfiles
 log "Applying dotfiles with chezmoi"
+# --no-tty força stdin line-buffered nos prompts. Sem isso, chezmoi v2.70+ usa
+# huh (Charm) em raw mode e cada keystroke vira "confirma com default" — em
+# WSL2 + Windows Terminal o problema é especialmente reproduzível.
 if [ ! -d "$HOME/.local/share/chezmoi" ]; then
-  chezmoi init --source "$REPO_ROOT/dotfiles" --apply
+  chezmoi init --source "$REPO_ROOT/dotfiles" --apply --no-tty
 else
-  chezmoi apply --source "$REPO_ROOT/dotfiles"
+  chezmoi apply --source "$REPO_ROOT/dotfiles" --no-tty
 fi
 
 # 8. Install language runtimes from ~/.config/mise/config.toml

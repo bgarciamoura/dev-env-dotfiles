@@ -288,10 +288,12 @@ foreach ($p in $chezmoiCfgCandidates) {
     if (Test-Path $p) { $chezmoiInitialized = $true; break }
 }
 
+# --no-tty força stdin line-buffered nos prompts. Sem isso, chezmoi v2.70+ usa
+# huh (Charm) em raw mode e cada keystroke vira "confirma com default".
 if (-not $chezmoiInitialized) {
-    chezmoi init --source $ChezmoiSource --apply
+    chezmoi init --source $ChezmoiSource --apply --no-tty
 } else {
-    chezmoi apply --source $ChezmoiSource
+    chezmoi apply --source $ChezmoiSource --no-tty
 }
 
 # 8. Install language runtimes from ~/.config/mise/config.toml
