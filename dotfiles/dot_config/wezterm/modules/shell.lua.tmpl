@@ -10,9 +10,38 @@ function M.apply(config)
     config.enable_kitty_graphics = true
     config.enable_kitty_keyboard = true
 
+{{- /*
+    Template-time OS gating. Go-template runs at chezmoi-apply time, BEFORE
+    Lua executes. We must not emit `{{ lookPath "nu" }}` on Windows because
+    Nushell is not installed there in the wezterm-only profile (and may not
+    be on any Windows-as-WSL-host setup). Splitting the file by .chezmoi.os
+    keeps the rendered Lua minimal and free of dead branches.
+*/}}
+{{- if eq .chezmoi.os "windows" }}
+    -- Rendered on Windows.
     if is_windows() then
+        {{- if eq .useWsl "yes" }}
+        -- WSL mode: WezTerm spawns wsl.exe and runs Nushell as login shell
+        -- inside the chosen distro. --cd ~ lands in the Linux home (not
+        -- /mnt/c/Users/...), which is critical for filesystem performance
+        -- on monorepos and node_modules-heavy projects.
+        config.default_prog = {
+            'wsl.exe',
+            '-d', '{{ .wslDistro }}',
+            '--cd', '~',
+            '--', 'nu', '--login',
+        }
+        config.default_domain = 'WSL:{{ .wslDistro }}'
+        {{- else }}
+        -- Local Windows mode: launch Nushell installed on the host.
         config.default_prog = { 'nu.exe' }
-    else
+        {{- end }}
+    end
+{{- else }}
+    -- Rendered on macOS/Linux. is_windows() will be false at runtime, but we
+    -- keep the branch structure so the same module file works if WezTerm is
+    -- ever launched on a different host than the one chezmoi rendered for.
+    if not is_windows() then
         -- Absolute path resolved at chezmoi-apply time. WezTerm on macOS is
         -- spawned by launchd with a minimal PATH (/usr/bin:/bin:/usr/sbin:/sbin),
         -- so a bare `nu` would fail to start.
@@ -29,6 +58,7 @@ function M.apply(config)
             '--config',     '{{ .chezmoi.homeDir }}/.config/nushell/config.nu',
         }
     end
+{{- end }}
 end
 
 return M

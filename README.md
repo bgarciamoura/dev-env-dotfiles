@@ -75,6 +75,65 @@ The script:
 4. Installs Chezmoi and runs `chezmoi init --apply --source ./dotfiles` so your configs land in `~/.config/...`.
 5. Optional: runs `atuin login` if `ATUIN_USERNAME` is set.
 
+### Windows 11 — wezterm-only profile (host for WSL)
+
+Use this when Windows is just the GUI host for WezTerm and your real dev environment lives in WSL. It installs only what's needed for the terminal window to render — no Nushell, Starship, mise, Atuin, Neovim, etc. on the Windows side.
+
+```powershell
+cd C:\Users\<you>\projects\new-dev-setup
+.\install-wezterm-only.ps1
+```
+
+What gets installed on Windows:
+
+- **Scoop** + `extras` and `nerd-fonts` buckets
+- **git**, **chezmoi**, **wezterm**
+- **JetBrainsMono Nerd Font**, **Maple Mono NF**
+
+What does NOT get installed (compared to the full profile):
+
+- Nushell, Starship, Zellij, Atuin, Yazi, mise, Neovim
+- Rust toolchain, cargo tools
+- Language runtimes (Node, Python)
+- XDG_CONFIG_HOME and other env vars (the `run_onchange_before_00-windows-env-vars` script is skipped)
+- Neovim repo clone (`run_onchange_after_20-clone-nvim` script is skipped)
+
+What gets configured by Chezmoi:
+
+- Only `~/.config/wezterm/` (entry point + modules: `appearance`, `font`, `keys`, `shell`, `status`)
+- Nothing else under `~/.config/`
+
+During `chezmoi init` you'll be asked an extra question: **`Use WSL as the WezTerm shell on Windows?`** Answer `yes` and provide a distro name (run `wsl -l -q` in PowerShell to see exact names — typically `Ubuntu-24.04`). The generated `shell.lua` will spawn `wsl.exe -d <distro> --cd ~ -- nu --login`, landing you in your Linux home with Nushell as login shell.
+
+To install the full profile inside WSL afterwards:
+
+```bash
+# inside WSL
+git clone https://github.com/<your-user>/new-dev-setup ~/projects/new-dev-setup
+cd ~/projects/new-dev-setup
+./install.sh
+```
+
+When chezmoi asks for the profile inside WSL, choose `full`. The same dotfiles repo serves both sides: WezTerm config on Windows, everything else on WSL.
+
+#### Switching between profiles on the same machine
+
+The `profile` answer is stored in `~/.config/chezmoi/chezmoi.toml` (or `%APPDATA%\chezmoi\chezmoi.toml` on Windows). To switch:
+
+```powershell
+chezmoi edit-config           # change profile = "wezterm-only"  →  "full" (or vice-versa)
+chezmoi apply
+```
+
+Or re-prompt all answers:
+
+```powershell
+chezmoi init --source dotfiles --force
+chezmoi apply
+```
+
+Note: switching from `full` to `wezterm-only` does NOT uninstall packages — it only stops materializing their config files. Use `scoop uninstall` manually if you want to free disk space.
+
 ## Versões: runtimes e mínimos de CLI
 
 Dois pontos de controle de versão, separados por intenção:
@@ -254,14 +313,17 @@ chezmoi apply
 new-dev-setup/
 ├── README.md
 ├── install.sh                   # Unix entry point (macOS + Linux)
-├── install.ps1                  # Windows entry point
+├── install.ps1                  # Windows entry point — full profile
+├── install-wezterm-only.ps1     # Windows entry point — wezterm-only profile
 ├── bootstrap/
 │   ├── macos.sh                 # macOS package install
 │   ├── linux.sh                 # Ubuntu/Debian package install
-│   └── windows.ps1              # Windows package install
+│   ├── windows.ps1              # Windows package install (full)
+│   └── windows-wezterm-only.ps1 # Windows package install (wezterm-only)
 ├── packages/
 │   ├── Brewfile                 # macOS + Linux packages
-│   ├── scoopfile.json           # Windows packages
+│   ├── scoopfile.json           # Windows packages — full
+│   ├── scoopfile-wezterm-only.json # Windows packages — wezterm-only subset
 │   ├── cargo-tools.txt          # Rust tools (universal fallback)
 │   └── versions.env             # Versões mínimas dos CLIs (gates pós-instalação)
 └── dotfiles/                    # Chezmoi source directory

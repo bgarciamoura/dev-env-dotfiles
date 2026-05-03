@@ -21,3 +21,30 @@ README.md
 .chezmoiscripts/10-post-apply.sh
 .chezmoiscripts/20-clone-nvim.sh
 {{ end -}}
+
+{{/*
+   wezterm-only profile: ignore everything in the destination tree that is NOT
+   WezTerm config.
+
+   Patterns are matched against TARGET paths via doublestar.Match (NOT
+   gitignore semantics). Key consequences:
+
+   - The 'dot_' source prefix is stripped — `dot_config/wezterm/wezterm.lua.tmpl`
+     materializes to `.config/wezterm/wezterm.lua`, so the pattern must
+     reference `.config/...`, not `dot_config/...`.
+   - `*` only matches at one path level. `**` matches at any depth.
+   - `!` un-ignores. Order matters: parent directories must be un-ignored
+     BEFORE their children for the children to remain visible.
+
+   The `**` rule below also catches `.chezmoiscripts/...` target paths (per the
+   header comment), which is what we want: in wezterm-only mode no chezmoi
+   script should run — no XDG env vars, no Neovim clone, no Nushell vendor
+   regen. The `.chezmoidata/` directory holds template data and never produces
+   target files, so it's unaffected by these rules.
+*/ -}}
+{{ if eq .profile "wezterm-only" -}}
+**
+!.config
+!.config/wezterm
+!.config/wezterm/**
+{{ end -}}

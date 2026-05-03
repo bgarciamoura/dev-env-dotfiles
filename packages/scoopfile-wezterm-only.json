@@ -1,0 +1,14 @@
+{
+  "buckets": [
+    { "Name": "main",       "Source": "https://github.com/ScoopInstaller/Main" },
+    { "Name": "extras",     "Source": "https://github.com/ScoopInstaller/Extras" },
+    { "Name": "nerd-fonts", "Source": "https://github.com/matthewjberger/scoop-nerd-fonts" }
+  ],
+  "apps": [
+    { "Source": "main",       "Name": "git" },
+    { "Source": "main",       "Name": "chezmoi" },
+    { "Source": "extras",     "Name": "wezterm" },
+    { "Source": "nerd-fonts", "Name": "JetBrainsMono-NF" },
+    { "Source": "nerd-fonts", "Name": "Maple-Mono-NF" }
+  ]
+}
