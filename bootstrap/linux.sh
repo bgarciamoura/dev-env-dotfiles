@@ -2,7 +2,8 @@
 # Ubuntu / Debian bootstrap.
 # Strategy: install a minimal system toolchain via apt, then use Homebrew on Linux
 # for everything else (Homebrew gives us the same latest versions as macOS, using
-# the same Brewfile). Rust tools go through cargo as a fallback.
+# the same Brewfile). WezTerm is the one exception — pulled from apt.fury.io
+# because Linuxbrew doesn't ship it.
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -30,7 +31,7 @@ require_nvim_version() {
   log "Neovim $raw detectado (>=$min)."
 }
 
-# 1. apt: system-level build tools needed for brew and cargo builds
+# 1. apt: system-level build tools needed for brew bootstrap + native libs
 log "Installing apt prerequisites (sudo required)"
 sudo apt-get update -y
 sudo apt-get install -y \
@@ -68,24 +69,7 @@ brew bundle --file="$REPO_ROOT/packages/Brewfile"
 
 require_nvim_version "$NVIM_MIN_VERSION"
 
-# 4. Cargo (if not installed by brew already, install via rustup for newest stable)
-if ! command -v cargo >/dev/null 2>&1; then
-  log "Installing rustup (for cargo)"
-  curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain stable --profile minimal
-  # shellcheck disable=SC1091
-  . "$HOME/.cargo/env"
-fi
-
-if [ -f "$REPO_ROOT/packages/cargo-tools.txt" ]; then
-  log "Installing cargo tools"
-  while IFS= read -r crate || [ -n "$crate" ]; do
-    [ -z "$crate" ] && continue
-    [[ "$crate" =~ ^# ]] && continue
-    cargo install --locked "$crate" || warn "cargo install $crate failed (non-fatal)"
-  done < "$REPO_ROOT/packages/cargo-tools.txt"
-fi
-
-# 5. WezTerm (not available on Linuxbrew — use official repo)
+# 4. WezTerm (not available on Linuxbrew — use official repo)
 if ! command -v wezterm >/dev/null 2>&1; then
   log "Installing WezTerm from official APT repo"
   curl -fsSL https://apt.fury.io/wez/gpg.key | sudo gpg --yes --dearmor -o /usr/share/keyrings/wezterm-fury.gpg
@@ -95,7 +79,7 @@ if ! command -v wezterm >/dev/null 2>&1; then
   sudo apt-get install -y wezterm
 fi
 
-# 6. Nerd Fonts (brew's homebrew/cask-fonts does not work on Linux)
+# 5. Nerd Fonts (brew's homebrew/cask-fonts does not work on Linux)
 log "Installing Nerd Fonts (JetBrainsMono + Maple Mono NF) to ~/.local/share/fonts"
 FONT_DIR="$HOME/.local/share/fonts"
 mkdir -p "$FONT_DIR"
@@ -124,7 +108,7 @@ install_nerdfont "Maple Mono NF" \
 
 fc-cache -fv >/dev/null
 
-# 7. Apply dotfiles
+# 6. Apply dotfiles
 log "Applying dotfiles with chezmoi"
 # --no-tty força stdin line-buffered nos prompts. Sem isso, chezmoi v2.70+ usa
 # huh (Charm) em raw mode e cada keystroke vira "confirma com default" — em
@@ -135,7 +119,7 @@ else
   chezmoi apply --source "$REPO_ROOT/dotfiles" --no-tty
 fi
 
-# 8. Install language runtimes from ~/.config/mise/config.toml
+# 7. Install language runtimes from ~/.config/mise/config.toml
 #
 # `mise install` retorna exit 0 mesmo quando um runtime individual falha
 # silenciosamente (a verificação GPG requer gpg no PATH — cobrimos isso no
@@ -156,7 +140,7 @@ if command -v mise >/dev/null 2>&1; then
   fi
 fi
 
-# 9. Run Neovim install-deps.sh now that mise's Python is available.
+# 8. Run Neovim install-deps.sh now that mise's Python is available.
 # Running this AFTER `mise install` ensures `pip --user` uses mise's Python,
 # avoiding PEP 668 errors on Homebrew's externally-managed Python.
 NVIM_DEPS="$HOME/.config/nvim/scripts/install-deps.sh"
@@ -169,7 +153,7 @@ if [ -f "$NVIM_DEPS" ]; then
   fi
 fi
 
-# 10. Register Nushell as a login shell (optional)
+# 9. Register Nushell as a login shell (optional)
 NU_PATH="$(command -v nu || true)"
 if [ -n "$NU_PATH" ] && ! grep -Fxq "$NU_PATH" /etc/shells; then
   log "Registering Nushell in /etc/shells (sudo required)"

@@ -59,17 +59,7 @@ brew bundle --file="$REPO_ROOT/packages/Brewfile.mac"
 
 require_nvim_version "$NVIM_MIN_VERSION"
 
-# 4. Cargo tools (anything not in brew, or newer than brew's)
-if command -v cargo >/dev/null 2>&1 && [ -f "$REPO_ROOT/packages/cargo-tools.txt" ]; then
-  log "Installing cargo tools"
-  while IFS= read -r crate || [ -n "$crate" ]; do
-    [ -z "$crate" ] && continue
-    [[ "$crate" =~ ^# ]] && continue
-    cargo install --locked "$crate" || warn "cargo install $crate failed (non-fatal)"
-  done < "$REPO_ROOT/packages/cargo-tools.txt"
-fi
-
-# 5. Apply dotfiles
+# 4. Apply dotfiles
 log "Applying dotfiles with chezmoi"
 # --no-tty força stdin line-buffered nos prompts. Sem isso, chezmoi v2.70+ usa
 # huh (Charm) em raw mode e cada keystroke vira "confirma com default".
@@ -79,7 +69,7 @@ else
   chezmoi apply --source "$REPO_ROOT/dotfiles" --no-tty
 fi
 
-# 6. Install language runtimes from ~/.config/mise/config.toml
+# 5. Install language runtimes from ~/.config/mise/config.toml
 #
 # `mise install` retorna exit 0 mesmo quando um runtime individual falha
 # silenciosamente (a verificação GPG requer gpg no PATH — cobrimos isso no
@@ -105,7 +95,7 @@ if command -v mise >/dev/null 2>&1; then
   fi
 fi
 
-# 7. Run Neovim install-deps.sh now that mise's Python is available.
+# 6. Run Neovim install-deps.sh now that mise's Python is available.
 # Running this AFTER `mise install` ensures `pip --user` uses mise's Python,
 # avoiding PEP 668 errors on Homebrew's externally-managed Python.
 NVIM_DEPS="$HOME/.config/nvim/scripts/install-deps.sh"
@@ -118,7 +108,7 @@ if [ -f "$NVIM_DEPS" ]; then
   fi
 fi
 
-# 8. Register Nushell as a login shell (optional)
+# 7. Register Nushell as a login shell (optional)
 NU_PATH="$(command -v nu || true)"
 if [ -n "$NU_PATH" ] && ! grep -Fxq "$NU_PATH" /etc/shells; then
   log "Registering Nushell in /etc/shells (sudo required)"

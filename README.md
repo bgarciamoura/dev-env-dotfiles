@@ -30,9 +30,9 @@ The bootstrap scripts install the package managers, install every tool, install 
 
 | Platform    | Primary                             | Fallback for niche tools  |
 |-------------|-------------------------------------|---------------------------|
-| Windows 11  | **Scoop** (+ `main`, `extras`, `nerd-fonts` buckets) | `cargo`, `winget` |
-| macOS       | **Homebrew**                        | `cargo`                   |
-| Ubuntu/Debian | **Homebrew on Linux** (`brew`)    | `cargo`, `apt` (only if required) |
+| Windows 11  | **Scoop** (+ `main`, `extras`, `nerd-fonts` buckets) | `winget` |
+| macOS       | **Homebrew**                        | —                         |
+| Ubuntu/Debian | **Homebrew on Linux** (`brew`)    | `apt` (only if required) |
 
 Homebrew on Linux gives you the **same latest versions** as on macOS, using the **same Brewfile**. This is the key trick for uniform latest packages on Unix. Scoop does the equivalent on Windows: it pulls binaries directly from GitHub releases, so versions stay current.
 
@@ -93,7 +93,6 @@ What gets installed on Windows:
 What does NOT get installed (compared to the full profile):
 
 - Nushell, Starship, Zellij, Atuin, Yazi, mise, Neovim
-- Rust toolchain, cargo tools
 - Language runtimes (Node, Python)
 - XDG_CONFIG_HOME and other env vars (the `run_onchange_before_00-windows-env-vars` script is skipped)
 - Neovim repo clone (`run_onchange_after_20-clone-nvim` script is skipped)
@@ -324,7 +323,6 @@ new-dev-setup/
 │   ├── Brewfile                 # macOS + Linux packages
 │   ├── scoopfile.json           # Windows packages — full
 │   ├── scoopfile-wezterm-only.json # Windows packages — wezterm-only subset
-│   ├── cargo-tools.txt          # Rust tools (universal fallback)
 │   └── versions.env             # Minimum CLI versions (post-install gates)
 └── dotfiles/                    # Chezmoi source directory
     ├── .chezmoiroot

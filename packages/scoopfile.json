@@ -25,7 +25,6 @@
     { "Source": "main",   "Name": "wget" },
     { "Source": "main",   "Name": "neovim" },
     { "Source": "main",   "Name": "mise" },
-    { "Source": "main",   "Name": "rustup" },
     { "Source": "main",   "Name": "gpg" },
     { "Source": "main",   "Name": "yazi" },
     { "Source": "extras", "Name": "wezterm" },

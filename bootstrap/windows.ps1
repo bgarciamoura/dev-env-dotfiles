@@ -1,4 +1,4 @@
-# Windows 11 bootstrap: Scoop + buckets + scoopfile.json + cargo + chezmoi apply.
+# Windows 11 bootstrap: Scoop + buckets + scoopfile.json + chezmoi apply.
 # Strategy: Scoop gives us bleeding-edge versions of dev tools straight from GitHub.
 # We add the 'main', 'extras', 'nerd-fonts', and 'versions' buckets and run `scoop import`.
 #
@@ -50,54 +50,7 @@ if (Test-Path $ScoopFile) {
     Warn "scoopfile.json not found at $ScoopFile — skipping bulk install"
 }
 
-# 3. Rust toolchain + cargo tools
-if (-not (Get-Command cargo -ErrorAction SilentlyContinue)) {
-    Log "Installing rustup"
-    scoop install rustup
-    # Refresh PATH from registry so rustup shim (just added by Scoop) is callable
-    # in the current session. Without this, 'rustup default stable' may fail.
-    $env:PATH = [Environment]::GetEnvironmentVariable('PATH', 'User') + ';' +
-                [Environment]::GetEnvironmentVariable('PATH', 'Machine')
-    if (Get-Command rustup -ErrorAction SilentlyContinue) {
-        rustup default stable
-    } else {
-        Warn "rustup instalado mas não está no PATH desta sessão. Reabra o terminal e rode 'rustup default stable'."
-    }
-}
-
-$CargoFile = Join-Path $RepoRoot 'packages\cargo-tools.txt'
-if (Test-Path $CargoFile) {
-    # Materializar lista de crates ativos antes de logar/avisar. Se só tem
-    # comentário (estado atual), pular o bloco inteiro em silêncio — evita
-    # 'link.exe não encontrado' como falso alarme quando não há compilação.
-    $crates = @(
-        Get-Content $CargoFile |
-            ForEach-Object { $_.Trim() } |
-            Where-Object { $_ -and -not $_.StartsWith('#') }
-    )
-    if ($crates.Count -gt 0) {
-        Log "Installing cargo tools"
-
-        # cargo install compila código nativo; no toolchain MSVC (padrão do rustup
-        # no Windows) isso exige link.exe das Build Tools do Visual Studio. Aviso
-        # upfront é melhor que deixar cada crate falhar com a mesma mensagem.
-        if (-not (Get-Command link.exe -ErrorAction SilentlyContinue)) {
-            Warn "link.exe (MSVC linker) não encontrado. Crates que compilam código nativo vão falhar."
-            Warn "Opções: (a) 'winget install Microsoft.VisualStudio.2022.BuildTools --override \"--wait --passive --add Microsoft.VisualStudio.Workload.VCTools\"', OU (b) trocar para toolchain GNU: 'rustup toolchain install stable-gnu; rustup default stable-gnu' (requer MinGW)."
-        }
-
-        # cargo é um executável externo, não PS cmdlet — try/catch NÃO captura
-        # seus exit codes. Precisa checar $LASTEXITCODE pra detectar falha.
-        foreach ($crate in $crates) {
-            cargo install --locked $crate
-            if ($LASTEXITCODE -ne 0) {
-                Warn "cargo install $crate falhou (exit=$LASTEXITCODE). Se for 'linker link.exe not found', veja o aviso acima sobre Build Tools."
-            }
-        }
-    }
-}
-
-# 4. Neovim version gate — exige >= NVIM_MIN_VERSION. Mesma técnica do Nushell
+# 3. Neovim version gate — exige >= NVIM_MIN_VERSION. Mesma técnica do Nushell
 # logo abaixo: strip de suffix pre-release antes do [version]::TryParse porque
 # builds nightly (ex: '0.12.0-dev+g1234abc') fariam o parse retornar $null e o
 # comparador virar.
@@ -118,7 +71,7 @@ if (Get-Command nvim -ErrorAction SilentlyContinue) {
     Die "Neovim não encontrado no PATH após a instalação."
 }
 
-# 5. Nushell version gate — XDG_CONFIG_HOME only honored on Windows from 0.92+.
+# 4. Nushell version gate — XDG_CONFIG_HOME only honored on Windows from 0.92+.
 # Nightly builds emit '0.113.0-nightly.abc1234'; strip suffix before parsing
 # so [version]::TryParse doesn't silently return $null.
 if (Get-Command nu -ErrorAction SilentlyContinue) {
@@ -135,7 +88,7 @@ if (Get-Command nu -ErrorAction SilentlyContinue) {
     }
 }
 
-# 6. Apply dotfiles (also runs the Windows env-var chezmoi script)
+# 5. Apply dotfiles (also runs the Windows env-var chezmoi script)
 # --no-tty força stdin line-buffered nos prompts. Sem isso, chezmoi v2.70+ usa
 # huh (Charm) em raw mode e cada keystroke vira "confirma com default".
 Log "Applying dotfiles with chezmoi"
@@ -146,7 +99,7 @@ if (-not (Test-ChezmoiInitialized)) {
     chezmoi apply --source $ChezmoiSource --no-tty
 }
 
-# 7. Install language runtimes from ~/.config/mise/config.toml
+# 6. Install language runtimes from ~/.config/mise/config.toml
 #
 # mise install retorna exit 0 mesmo quando um runtime individual falha
 # silenciosamente (ex: 'gpg not found, skipping verification' para node, ou o
@@ -165,7 +118,7 @@ if (Get-Command mise -ErrorAction SilentlyContinue) {
     }
 }
 
-# 8. Refresh font cache (Windows needs user to log out for new fonts in some apps, but WezTerm sees them immediately)
+# 7. Refresh font cache (Windows needs user to log out for new fonts in some apps, but WezTerm sees them immediately)
 Log "Fonts installed via Scoop's nerd-fonts bucket should be available to WezTerm on next launch."
 
 Log "Windows bootstrap complete."
