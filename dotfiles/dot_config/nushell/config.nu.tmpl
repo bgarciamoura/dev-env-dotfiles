@@ -70,7 +70,11 @@ $env.config = {
         reset_application_mode: true
     }
     render_right_prompt_on_last_line: false
-    use_kitty_protocol: true
+    # use_kitty_protocol pede ao terminal extended key encodings via Kitty
+    # Keyboard. No WezTerm + Windows a resposta da query (CSI ? 0 u) vaza
+    # como texto visível no topo da tela em todo novo prompt — mesmo tipo de
+    # race do osc133 acima. Mantemos false até o upstream consertar.
+    use_kitty_protocol: false
 }
 
 # --- Aliases -----------------------------------------------------------
