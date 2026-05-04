@@ -99,7 +99,7 @@ What does NOT get installed (compared to the full profile):
 
 What gets configured by Chezmoi:
 
-- Only `~/.config/wezterm/` (entry point + modules: `appearance`, `font`, `keys`, `shell`, `status`)
+- Only `~/.config/wezterm/` (entry point + modules: `appearance`, `font`, `keys`, `shell`, `status`, `which_key`)
 - Nothing else under `~/.config/`
 
 During `chezmoi init` you'll be asked an extra question: **`Use WSL as the WezTerm shell on Windows?`** Answer `yes` and provide a distro name (run `wsl -l -q` in PowerShell to see exact names — typically `Ubuntu-24.04`). The generated `shell.lua` will spawn `wsl.exe -d <distro> --cd ~ -- nu --login`, landing you in your Linux home with Nushell as login shell.
@@ -344,7 +344,8 @@ new-dev-setup/
         │       ├── status.lua.tmpl      # status bar colors from theme
         │       ├── font.lua.tmpl
         │       ├── keys.lua
-        │       └── shell.lua
+        │       ├── shell.lua
+        │       └── which_key.lua        # which-key cheat-sheet plugin loader
         ├── zellij/
         │   ├── config.kdl.tmpl  # theme name comes from .theme
         │   └── themes/
