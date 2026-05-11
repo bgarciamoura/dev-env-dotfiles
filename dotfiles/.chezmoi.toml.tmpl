@@ -5,20 +5,22 @@
 {{- $defaultFont   := promptChoiceOnce . "defaultFont"   "Default terminal font" (list "JetBrainsMono Nerd Font" "Maple Mono NF") "JetBrainsMono Nerd Font" -}}
 {{- $theme         := promptChoiceOnce . "theme"         "Theme (palette in .chezmoidata/themes.toml)" (list "oasis-lagoon-dark") "oasis-lagoon-dark" -}}
 
-{{/* Profile selector. 'full' applies the entire dotfile set (Nushell, Starship,
-     Zellij, Atuin, mise, Yazi, Neovim, etc.). 'wezterm-only' materializes only
-     WezTerm config — useful on Windows when the real dev environment lives in
-     WSL and Windows is just the host for the GUI terminal. */ -}}
-{{- $profile       := promptChoiceOnce . "profile"       "Profile (full = entire dotfile set; wezterm-only = WezTerm config alone, for Windows-as-WSL-host setups)" (list "full" "wezterm-only") "full" -}}
-
-{{/* WSL integration on Windows. Only relevant when chezmoi is running under
-     Windows AND the user wants WezTerm to spawn a WSL shell instead of a local
-     Nushell. Asked unconditionally so the answer persists; the shell.lua
-     template gates its use on .chezmoi.os == "windows". */ -}}
-{{- $useWsl        := promptChoiceOnce . "useWsl"        "Use WSL as the WezTerm shell on Windows? (no = local Nushell on Windows)" (list "no" "yes") "no" -}}
-{{- $wslDistro     := "" -}}
-{{- if eq $useWsl "yes" -}}
-{{-   $wslDistro    = promptStringOnce  . "wslDistro"    "WSL distro name (run `wsl -l -q` in PowerShell to see exact names)" "Ubuntu-24.04" -}}
+{{/* Profile selector and WSL integration are Windows-only concerns:
+     - 'wezterm-only' profile is for Windows-as-WSL-host setups; on macOS/Linux
+       it would ignore everything except ~/.config/wezterm/ (see .chezmoiignore).
+     - useWsl/wslDistro only feed shell.lua.tmpl, which is itself gated on
+       .chezmoi.os == "windows".
+     Defaults are set inertly on non-Windows so dependent templates still
+     render, but the user is never prompted for them. */ -}}
+{{- $profile   := "full" -}}
+{{- $useWsl    := "no" -}}
+{{- $wslDistro := "" -}}
+{{- if eq .chezmoi.os "windows" -}}
+{{-   $profile   = promptChoiceOnce . "profile"  "Profile (full = entire dotfile set; wezterm-only = WezTerm config alone, for Windows-as-WSL-host setups)" (list "full" "wezterm-only") "full" -}}
+{{-   $useWsl    = promptChoiceOnce . "useWsl"   "Use WSL as the WezTerm shell on Windows? (no = local Nushell on Windows)" (list "no" "yes") "no" -}}
+{{-   if eq $useWsl "yes" -}}
+{{-     $wslDistro = promptStringOnce . "wslDistro" "WSL distro name (run `wsl -l -q` in PowerShell to see exact names)" "Ubuntu-24.04" -}}
+{{-   end -}}
 {{- end -}}
 
 [data]
