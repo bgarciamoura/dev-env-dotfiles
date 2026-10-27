@@ -1,0 +1,145 @@
+{{- /*
+  Claude Code MCP servers, merged into ~/.claude.json by
+  modify_private_dot_claude.json.tmpl.
+
+    "user"  -> .mcpServers                   (user scope: every project)
+    "local" -> .projects[<path>].mcpServers  (local scope: one project dir)
+
+  This repo is PUBLIC: secrets come from the local chezmoi.toml (prompts in
+  .chezmoi.toml.tmpl) and must never be written here. A server whose secret
+  is empty is omitted. Conditional entries go FIRST in each object so their
+  trailing comma is always followed by an unconditional entry.
+
+  Servers pointing at ~/projects/... or ~/.local/... only work after those
+  projects/tools are built or installed — chezmoi does not do that.
+*/ -}}
+{{- $home := .chezmoi.homeDir -}}
+{{- $coolifyBaseUrl := get . "coolifyBaseUrl" -}}
+{{- $coolifyAccessToken := get . "coolifyAccessToken" -}}
+{{- $pixellabApiToken := get . "pixellabApiToken" -}}
+{
+  "user": {
+{{- if and $coolifyBaseUrl $coolifyAccessToken }}
+    "coolify": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["@masonator/coolify-mcp@latest"],
+      "env": {
+        "COOLIFY_BASE_URL": {{ $coolifyBaseUrl | toJson }},
+        "COOLIFY_ACCESS_TOKEN": {{ $coolifyAccessToken | toJson }}
+      }
+    },
+{{- end }}
+    "pokemon-tcg": {
+      "type": "stdio",
+      "command": "node",
+      "args": ["{{ $home }}/projects/tcg/pokemon-tcg-mcp/dist/index.js"],
+      "env": {}
+    },
+    "mtg-commander": {
+      "type": "stdio",
+      "command": "node",
+      "args": ["{{ $home }}/projects/tcg/mtg-commander-mcp/dist/index.js"],
+      "env": {}
+    },
+    "colab-mcp": {
+      "type": "stdio",
+      "command": "uvx",
+      "args": ["git+https://github.com/googlecolab/colab-mcp"],
+      "env": {}
+    },
+    "godot": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@coding-solo/godot-mcp@0.1.1"],
+      "env": {
+        "GODOT_PATH": "{{ $home }}/.local/bin/godot-wsl"
+      }
+    },
+    "blender": {
+      "type": "stdio",
+      "command": "uvx",
+      "args": [
+        "--python", "3.11",
+        "--from", "mcp-for-blender==2.1.8",
+        "python", "{{ $home }}/.local/bin/blender_mcp_wsl.py"
+      ],
+      "env": {
+        "DISABLE_TELEMETRY": "true",
+        "BLENDER_HOST": "localhost",
+        "BLENDER_PORT": "9876"
+      }
+    },
+    "blender-official": {
+      "type": "stdio",
+      "command": "uvx",
+      "args": [
+        "--python", "3.11",
+        "--from", "git+https://projects.blender.org/lab/blender_mcp.git@dbbf836#subdirectory=mcp",
+        "blender-mcp"
+      ],
+      "env": {
+        "BLENDER_MCP_HOST": "localhost",
+        "BLENDER_MCP_PORT": "9877"
+      }
+    },
+    "aseprite-tools": {
+      "type": "stdio",
+      "command": "uv",
+      "args": [
+        "--directory", "{{ $home }}/.local/share/aseprite-mcp",
+        "run", "python", "-m", "aseprite_mcp"
+      ],
+      "env": {
+        "ASEPRITE_PATH": "{{ $home }}/.local/bin/aseprite-wsl"
+      }
+    }
+  },
+  "local": {
+{{- if $pixellabApiToken }}
+    "{{ $home }}/projects/games/testing-new-pixel-arts": {
+      "pixellab": {
+        "type": "http",
+        "url": "https://api.pixellab.ai/mcp",
+        "headers": { "Authorization": {{ printf "Bearer %s" $pixellabApiToken | toJson }} }
+      }
+    },
+    "{{ $home }}/projects/games/project-aegis": {
+      "pixellab": {
+        "type": "http",
+        "url": "https://api.pixellab.ai/mcp",
+        "headers": { "Authorization": {{ printf "Bearer %s" $pixellabApiToken | toJson }} }
+      }
+    },
+{{- end }}
+    "{{ $home }}": {
+      "blender": {
+        "type": "stdio",
+        "command": "uvx",
+        "args": ["--from", "{{ $home }}/.local/share/blender_mcp/mcp", "blender-mcp"],
+        "env": {
+          "BLENDER_MCP_HOST": "127.0.0.1",
+          "BLENDER_MCP_PORT": "9876"
+        }
+      },
+      "asana": {
+        "type": "sse",
+        "url": "https://mcp.asana.com/sse"
+      }
+    },
+    "{{ $home }}/projects": {
+      "trello": {
+        "type": "http",
+        "url": "https://mcp.trello.com/v1"
+      }
+    },
+    "/mnt/c/Users/bgarciamoura/Documents/pós/visao computacional": {
+      "colab": {
+        "type": "stdio",
+        "command": "uvx",
+        "args": ["git+https://github.com/googlecolab/colab-mcp"],
+        "env": {}
+      }
+    }
+  }
+}

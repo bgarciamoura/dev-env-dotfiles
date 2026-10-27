@@ -23,6 +23,13 @@
 {{-   end -}}
 {{- end -}}
 
+{{/* Secrets for the Claude Code MCP servers (.chezmoitemplates/claude-mcp.json).
+     This repo is public: the answers live only in the local chezmoi.toml.
+     Leave empty to skip the corresponding server. */ -}}
+{{- $coolifyBaseUrl     := promptStringOnce . "coolifyBaseUrl"     "Coolify base URL for the Claude MCP (blank to skip)"   "" -}}
+{{- $coolifyAccessToken := promptStringOnce . "coolifyAccessToken" "Coolify API token for the Claude MCP (blank to skip)"  "" -}}
+{{- $pixellabApiToken   := promptStringOnce . "pixellabApiToken"   "PixelLab API token for the Claude MCP (blank to skip)" "" -}}
+
 [data]
     fullName     = {{ $fullName | quote }}
     email        = {{ $email | quote }}
@@ -32,5 +39,8 @@
     profile      = {{ $profile | quote }}
     useWsl       = {{ $useWsl | quote }}
     wslDistro    = {{ $wslDistro | quote }}
+    coolifyBaseUrl     = {{ $coolifyBaseUrl | quote }}
+    coolifyAccessToken = {{ $coolifyAccessToken | quote }}
+    pixellabApiToken   = {{ $pixellabApiToken | quote }}
     os           = {{ .chezmoi.os | quote }}
     arch         = {{ .chezmoi.arch | quote }}

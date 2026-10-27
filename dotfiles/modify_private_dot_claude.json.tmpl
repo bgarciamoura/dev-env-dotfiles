@@ -1,0 +1,34 @@
+#!/usr/bin/env bash
+# Rewrites ONLY the MCP sections of ~/.claude.json. Claude Code owns the rest
+# of that file (UI state, per-project history, caches), so it is never
+# versioned as a whole. chezmoi pipes the current file on stdin and replaces
+# it with stdout; on any error the target is left untouched.
+#
+#   .mcpServers                   <- "user"  (declarative: unlisted servers are REMOVED)
+#   .projects[<path>].mcpServers  <- "local" (only the listed paths are touched)
+#
+# Server definitions live in .chezmoitemplates/claude-mcp.json.
+# Run `chezmoi apply` with Claude Code closed — it rewrites this file often.
+set -euo pipefail
+
+command -v jq >/dev/null 2>&1 || { echo "modify .claude.json: jq not found" >&2; exit 1; }
+
+# Inserted verbatim (no fromJson/toJson round-trip: Go would sort the keys and
+# reorder ~/.claude.json). Invalid JSON still aborts: jq --argjson rejects it.
+mcp="$(cat <<'CHEZMOI_CLAUDE_MCP_EOF'
+{{ includeTemplate "claude-mcp.json" . }}
+CHEZMOI_CLAUDE_MCP_EOF
+)"
+
+current="$(cat)"
+[ -n "$current" ] || current='{}'
+
+updated="$(printf '%s' "$current" | jq --indent 2 --argjson mcp "$mcp" '
+  .mcpServers = $mcp.user
+  | reduce ($mcp.local | to_entries[]) as $p (.;
+      .projects[$p.key].mcpServers = $p.value)
+')"
+
+# Claude Code writes the file without a trailing newline; match it so an
+# unchanged MCP config yields an empty `chezmoi diff`.
+printf '%s' "$updated"

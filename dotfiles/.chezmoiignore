@@ -18,6 +18,7 @@ README.md
 {{ end -}}
 
 {{ if eq .chezmoi.os "windows" -}}
+.claude.json
 .chezmoiscripts/10-post-apply.sh
 .chezmoiscripts/20-clone-nvim.sh
 {{ end -}}
