@@ -30,6 +30,12 @@
 {{- $coolifyAccessToken := promptStringOnce . "coolifyAccessToken" "Coolify API token for the Claude MCP (blank to skip)"  "" -}}
 {{- $pixellabApiToken   := promptStringOnce . "pixellabApiToken"   "PixelLab API token for the Claude MCP (blank to skip)" "" -}}
 
+{{/* Persisted so plain `chezmoi diff/apply/update/cd` work without --source.
+     dotfiles/ is a subdirectory of the Git repo, so the working tree is its
+     parent: `chezmoi update` must pull there. */ -}}
+sourceDir   = {{ .chezmoi.sourceDir | quote }}
+workingTree = {{ .chezmoi.sourceDir | dir | quote }}
+
 [data]
     fullName     = {{ $fullName | quote }}
     email        = {{ $email | quote }}

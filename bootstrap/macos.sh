@@ -63,7 +63,7 @@ require_nvim_version "$NVIM_MIN_VERSION"
 log "Applying dotfiles with chezmoi"
 # --no-tty força stdin line-buffered nos prompts. Sem isso, chezmoi v2.70+ usa
 # huh (Charm) em raw mode e cada keystroke vira "confirma com default".
-if [ ! -d "$HOME/.local/share/chezmoi" ]; then
+if [ ! -f "${XDG_CONFIG_HOME:-$HOME/.config}/chezmoi/chezmoi.toml" ]; then
   chezmoi init --source "$REPO_ROOT/dotfiles" --apply --no-tty
 else
   chezmoi apply --source "$REPO_ROOT/dotfiles" --no-tty
