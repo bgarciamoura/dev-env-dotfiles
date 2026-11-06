@@ -78,26 +78,31 @@ $env.config = {
 }
 
 # --- Aliases -----------------------------------------------------------
-alias ll = ls -la
-alias la = ls -a
 alias l  = ls
 alias lg = lazygit
 alias gs = git status
 alias gd = git diff
 alias gl = git log --oneline --graph --decorate --all
 
-# eza as a richer ls when available
-if (which eza | is-not-empty) {
-    alias ls = eza --icons=auto --group-directories-first
-    alias ll = eza -l --icons=auto --group-directories-first --git
-    alias la = eza -la --icons=auto --group-directories-first --git
-    alias lt = eza -T --icons=auto --git-ignore
-}
+# Tool checks happen at chezmoi-apply time: an alias declared inside a Nushell
+# `if` block only exists within that block. Re-run `chezmoi apply` after
+# installing eza or bat.
+#
+# eza as a richer listing when available. `ls` itself stays the Nushell builtin:
+# it returns structured data, so aliasing it breaks pipelines like `ls | where`.
+{{- if lookPath "eza" }}
+alias ll = eza -l --icons=auto --group-directories-first --git
+alias la = eza -la --icons=auto --group-directories-first --git
+alias lt = eza -T --icons=auto --git-ignore
+{{- else }}
+alias ll = ls -la
+alias la = ls -a
+{{- end }}
 
 # bat as cat
-if (which bat | is-not-empty) {
-    alias cat = bat --style=plain
-}
+{{- if lookPath "bat" }}
+alias cat = bat --style=plain
+{{- end }}
 
 # --- Keybindings -------------------------------------------------------
 # Atuin's up-arrow replacement (we disabled the default in env.nu so we bind
