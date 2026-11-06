@@ -104,6 +104,23 @@ alias la = ls -a
 alias cat = bat --style=plain
 {{- end }}
 
+# --- Project picker ----------------------------------------------------
+# Fuzzy-find a Git repository under ~/projects and cd into it (Ctrl+F).
+def --env pj [] {
+    let selected = try {
+        ^fd --hidden --no-ignore --max-depth 4 --exclude node_modules '^\.git$' ($nu.home-dir | path join "projects")
+        | lines
+        | each {|it| $it | str trim --right --char (char path_sep) | path dirname }
+        | str join (char newline)
+        | ^fzf --layout reverse --prompt 'project> '
+        | str trim
+    } catch { "" }
+
+    if ($selected | is-not-empty) {
+        cd $selected
+    }
+}
+
 # --- Keybindings -------------------------------------------------------
 # Atuin's up-arrow replacement (we disabled the default in env.nu so we bind
 # Ctrl+R to Atuin instead — leaves up-arrow for Nu's native history scroll).
@@ -115,7 +132,15 @@ $env.config = ($env.config | upsert keybindings [
         mode: [emacs, vi_insert, vi_normal]
         event: { send: executehostcommand cmd: "atuin search --interactive" }
     }
+    {
+        name: project_picker
+        modifier: control
+        keycode: char_f
+        mode: [emacs, vi_insert, vi_normal]
+        event: { send: executehostcommand cmd: "pj" }
+    }
 ])
 
 # --- Machine-specific data ---------------------------------------------
+# Untracked per-machine overrides: any .nu file in ~/.config/nushell/autoload/.
 # {{ .fullName }} <{{ .email }}> — {{ .machineClass }} machine on {{ .chezmoi.os }}
