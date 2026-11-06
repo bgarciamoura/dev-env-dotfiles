@@ -1,0 +1,19 @@
+{{- if eq .chezmoi.os "windows" -}}
+# Installs packages during `chezmoi apply` whenever scoopfile.json changes, so a
+# new entry reaches every machine without re-running install.ps1.
+#
+# Standalone and ASCII-only on purpose: chezmoi runs .ps1 scripts under Windows
+# PowerShell 5.1, which can't parse bootstrap\_windows-common.ps1.
+#
+# scoopfile.json hash: {{ include (joinPath (dir .chezmoi.sourceDir) "packages" "scoopfile.json") | sha256sum }}
+
+$ErrorActionPreference = 'Stop'
+
+if (-not (Get-Command scoop -ErrorAction SilentlyContinue)) {
+    Write-Warning "[chezmoi] scoop not found; skipping package install. Run install.ps1 first."
+    exit 0
+}
+
+Write-Host "[chezmoi] Installing packages from scoopfile.json" -ForegroundColor Cyan
+scoop import '{{ joinPath (dir .chezmoi.sourceDir) "packages" "scoopfile.json" }}'
+{{- end }}

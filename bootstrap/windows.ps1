@@ -116,6 +116,12 @@ if (Get-Command mise -ErrorAction SilentlyContinue) {
     if ($LASTEXITCODE -ne 0) {
         Warn "'mise ls' retornou exit=$LASTEXITCODE (não-fatal)."
     }
+
+    # commitizen + cz-git back the `git cz` command (lazygit's C key).
+    mise exec -- npm install -g commitizen cz-git
+    if ($LASTEXITCODE -ne 0) {
+        Warn "npm install of commitizen failed (non-fatal)."
+    }
 }
 
 # 7. Refresh font cache (Windows needs user to log out for new fonts in some apps, but WezTerm sees them immediately)

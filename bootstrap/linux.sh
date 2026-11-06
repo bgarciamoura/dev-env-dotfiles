@@ -138,6 +138,15 @@ if command -v mise >/dev/null 2>&1; then
   if [ -f "$HOME/.bashrc" ] && ! grep -Fq "$MISE_ACTIVATE_LINE" "$HOME/.bashrc"; then
     echo "$MISE_ACTIVATE_LINE" >> "$HOME/.bashrc"
   fi
+
+  # commitizen + cz-git back the `git cz` command (lazygit's C key). They live in
+  # the mise Node install, so a new Node version needs this to run again.
+  mise exec -- npm install -g commitizen cz-git || warn "npm install of commitizen failed (non-fatal)."
+fi
+
+# Enable the gitleaks pre-commit hook for this repository.
+if command -v pre-commit >/dev/null 2>&1; then
+  (cd "$REPO_ROOT" && pre-commit install) || warn "pre-commit install failed (non-fatal)."
 fi
 
 # 8. Run Neovim install-deps.sh now that mise's Python is available.

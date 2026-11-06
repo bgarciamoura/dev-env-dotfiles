@@ -1,0 +1,35 @@
+#!/usr/bin/env bash
+# Installs packages during `chezmoi apply` whenever a Brewfile changes, so a
+# new entry reaches every machine without re-running install.sh. Note that
+# `brew bundle` also upgrades the packages already listed.
+#
+# Counterpart: run_onchange_before_05-install-packages.ps1.tmpl runs on Windows.
+# Both are guarded by .chezmoiignore so only the right one applies.
+set -euo pipefail
+
+{{- $packages := joinPath (dir .chezmoi.sourceDir) "packages" }}
+
+# Brewfile hash: {{ include (joinPath $packages "Brewfile") | sha256sum }}
+{{- if eq .chezmoi.os "darwin" }}
+# Brewfile.mac hash: {{ include (joinPath $packages "Brewfile.mac") | sha256sum }}
+{{- end }}
+
+log() { printf "\033[1;34m[chezmoi]\033[0m %s\n" "$*"; }
+
+for candidate in /opt/homebrew/bin/brew /usr/local/bin/brew /home/linuxbrew/.linuxbrew/bin/brew; do
+    if [ -x "$candidate" ]; then
+        eval "$("$candidate" shellenv)"
+        break
+    fi
+done
+
+if ! command -v brew >/dev/null 2>&1; then
+    log "brew not found; skipping package install. Run install.sh first."
+    exit 0
+fi
+
+log "Installing packages from Brewfile"
+brew bundle --file="{{ joinPath $packages "Brewfile" }}"
+{{- if eq .chezmoi.os "darwin" }}
+brew bundle --file="{{ joinPath $packages "Brewfile.mac" }}"
+{{- end }}

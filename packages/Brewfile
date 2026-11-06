@@ -37,6 +37,9 @@ brew "yq"
 brew "wget"             # no Windows vem via scoop main/wget (tree foi dropado — usar `eza --tree`)
 brew "gnupg"              # required by mise node plugin for GPG verification
 brew "lazygit"            # TUI git client (alias `lg` no Nushell)
+brew "git-delta"          # pager for git and lazygit diffs
+brew "gitleaks"           # secret scanner, run by the pre-commit hook
+brew "pre-commit"         # installs this repo's git hooks
 
 # --- Runtimes (optional but useful) --------------------------------------
 brew "mise"               # asdf-style runtime manager (node, python, etc.)
