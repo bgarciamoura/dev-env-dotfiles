@@ -8,7 +8,10 @@ end
 
 function M.apply(config)
     config.enable_kitty_graphics = true
-    config.enable_kitty_keyboard = true
+    -- Desativado: a stable 20240203 tem bugs no kitty keyboard protocol que
+    -- quebram Shift (maiúsculas/símbolos) em TUIs que o negociam, como o
+    -- Claude Code. Reative apenas após atualizar o WezTerm para uma nightly.
+    config.enable_kitty_keyboard = false
 
 {{- /*
     Template-time OS gating. Go-template runs at chezmoi-apply time, BEFORE
