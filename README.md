@@ -220,6 +220,21 @@ The first time you run `chezmoi init`, you'll be asked for:
 
 These answers are stored in `~/.config/chezmoi/chezmoi.toml` and drive conditional logic in the templates (e.g., different WezTerm font, different git email per machine, same palette applied to WezTerm + Starship + Zellij).
 
+## Private overrides
+
+This repository is public, so anything specific to one machine stays out of it. These untracked files are picked up automatically and chezmoi leaves them alone:
+
+| File | Used for |
+|---|---|
+| `~/.gitconfig.private` | Git settings such as a work email or signing key; overrides `~/.gitconfig` |
+| `~/.config/nushell/autoload/*.nu` | Nushell aliases and environment for this machine |
+
+Secrets for the Claude Code MCP servers live in the local `chezmoi.toml`, filled in by the `chezmoi init` prompts.
+
+## Secret scanning
+
+[gitleaks](https://github.com/gitleaks/gitleaks) runs on every push and pull request (`.github/workflows/gitleaks.yml`) and, on macOS and Linux, before each commit through a [pre-commit](https://pre-commit.com/) hook. `install.sh` enables the hook; to do it by hand, run `pre-commit install` from the repository root. `pre-commit` isn't in Scoop's main bucket, so on Windows the CI scan is the only check.
+
 ## Themes
 
 Palettes are catalogued in `dotfiles/.chezmoidata/themes.toml`. The active theme is picked by the `theme` answer stored in `~/.config/chezmoi/chezmoi.toml`, and the templates under `dot_config/` consume that palette so WezTerm, Starship, and Zellij all change together. Works identically on Windows, macOS, and Linux, with no extra runtime.
