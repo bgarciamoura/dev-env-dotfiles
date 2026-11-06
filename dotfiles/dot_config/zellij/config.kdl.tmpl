@@ -8,14 +8,17 @@ default_layout "compact"
 pane_frames false
 simplified_ui false
 mouse_mode true
-copy_command "pbcopy"   // macOS; overridden on Linux/Windows by Zellij auto-detect
+// Without copy_command, Zellij copies through OSC 52 (handled by the terminal).
+{{- if eq .chezmoi.os "darwin" }}
+copy_command "pbcopy"
+{{- end }}
 
 scroll_buffer_size 20000
 
-// Theme name matches a file in theme_dir ({name}.kdl).
+// Theme name matches a file in ~/.config/zellij/themes ({name}.kdl), Zellij's
+// default theme directory. Do not set theme_dir to a "~" path: it isn't expanded.
 // Palette defined under dotfiles/.chezmoidata/themes.toml and applied via chezmoi.
 theme "{{ .theme }}"
-theme_dir "~/.config/zellij/themes"
 
 // Load plugin aliases
 load_plugins {
