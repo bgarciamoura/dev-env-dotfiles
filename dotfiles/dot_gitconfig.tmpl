@@ -1,0 +1,61 @@
+# Managed by chezmoi. Edit in the source repo, not here.
+# Machine-specific settings go in ~/.gitconfig.private (see the end of this file).
+
+[user]
+	name = {{ .fullName | quote }}
+	email = {{ .email | quote }}
+
+[init]
+	defaultBranch = main
+
+[core]
+	editor = nvim
+{{- /* delta is resolved at apply time: without it, core.pager would break git output. */}}
+{{- if lookPath "delta" }}
+	pager = delta
+
+[interactive]
+	diffFilter = delta --color-only
+
+[delta]
+	navigate = true
+	line-numbers = true
+	side-by-side = false
+{{- end }}
+
+[push]
+	default = simple
+	autoSetupRemote = true
+
+[pull]
+	rebase = false
+
+[merge]
+	conflictStyle = zdiff3
+	tool = nvimdiff
+
+[diff]
+	colorMoved = default
+	tool = nvimdiff
+
+[alias]
+	st = status
+	d = diff
+	co = checkout
+	ci = commit
+	ca = commit -a
+	br = branch
+	ba = branch -a
+	bm = branch --merged
+	bn = branch --no-merged
+	hist = log --pretty=format:\"%Cgreen%h %Creset%cd %Cblue[%cn] %Creset%s%C(yellow)%d%C(reset)\" --graph --date=relative --decorate --all
+	llog = log --graph --name-status --pretty=format:\"%C(red)%h %C(reset)(%cd) %C(green)%an %Creset%s %C(yellow)%d%Creset\" --date=relative
+	# List and stage conflicted files during a merge.
+	unmerged = "!git ls-files --unmerged | cut -f2 | sort -u"
+	add-unmerged = "!git unmerged | xargs git add"
+
+# Last on purpose: settings in this untracked file override everything above.
+# This repo is public, so work emails, signing keys and the like belong there.
+# A missing file is ignored by git.
+[include]
+	path = ~/.gitconfig.private

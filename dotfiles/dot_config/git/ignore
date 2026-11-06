@@ -1,0 +1,18 @@
+# Global gitignore. Git reads this path by default; no core.excludesFile needed.
+
+# OS noise
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Editors
+*.sw[po]
+Session.vim
+
+# Secrets
+.env
+.env.local
+.env.*.local
+
+# Agents
+**/.claude/settings.local.json
